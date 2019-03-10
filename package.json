@@ -32,5 +32,8 @@
     "gulp-template": "^5.0.0",
     "gulp-util": "^3.0.8",
     "through2": "^3.0.0"
+  },
+  "dependencies": {
+    "mongodb": "^3.1.13"
   }
 }
