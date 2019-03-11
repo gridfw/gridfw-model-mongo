@@ -7,10 +7,16 @@ _defineProperty= Object.defineProperty
 _defineProperties= Object.defineProperties
 _create= Object.create
 
+<%
+#=include utils.js
+%>
+
 ###*
  * MongoDB plugin for Gridfw-model
 ###
 
+#=include _queryGenerator-create-fxes.coffee
+#=include _queryGenerator.coffee
 #=include _collection.coffee
 
 class MongoRepository
@@ -19,6 +25,7 @@ class MongoRepository
 		_defineProperties this,
 			# map all collections
 			all: value: _create null
+			MongoClient: value: MongoClient
 		return
 	# connect to MongoDB
 	###*
@@ -71,6 +78,7 @@ class MongoRepository
 	 * @optional @param {string} options.name - collection name
 	 * @param {Model} options.model - Model
 	 * @param {List} options.indexes - list of used indexes
+	 * @param {PlainObject} methods - methods
 	###
 	from: (options)->
 		try
@@ -83,8 +91,14 @@ class MongoRepository
 			# check not already set
 			throw "Collection already set: #{name}" if name of @all
 
+			# create repo
+			repo= @all[name]= new CollectionRepository this, name, model, indexes
+
+			# add methods
+			repo.define options.define if options.define?
+
 			# return
-			@all[name]= new CollectionRepository this, name, model, indexes
+			repo
 		catch err
 			if typeof err is 'string'
 				err= new Error "MongoRepo:: #{err}" 
