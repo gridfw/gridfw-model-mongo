@@ -3,6 +3,7 @@ userRepo= MongoRepo.from
 	model: UserModel
 	define:
 		findByNameLimitN: MongoRepo.find('{name: $1}').limit('$2')	# findByName(name, limit)
+		inserDoc: MongoRepo.insert('$1').insertAll('$2') //TODO correct insertAll, writeAll, pipeAll
 
 
 

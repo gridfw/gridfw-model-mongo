@@ -1,6 +1,6 @@
 
 ### elements wrapper ###
-# _queryMethodWrapeprParamRegex= /^\?[0-9+]+$/
+_queryMethodWrapeprParamRegex= /^\$[0-9]+$/
 _argsCheckWpWp=
 	object: (v)-> throw 'Expected object or param' unless typeof v is 'object' and v
 	unsigned: (v)-> throw 'Expected positive integer or param' unless Number.isSafeInteger(v) and v>=0
@@ -49,6 +49,7 @@ _queryGFlagWrapper= (diretiveName, value)->
 		if (previousFx= @_elWrapper) and previousFx isnt fxName
 			throw new Error "Could not use #{previousFx} and #{fxName} at the same time"
 		@_elWrapper= fxName
+		@_elWrapperV= value
 		@['_' + diretiveName] = value
 		# chain
 		this
@@ -96,7 +97,12 @@ class FindQueryGen extends QueryBasic
 	build: ->
 		# distinct
 		if @_elWrapper
+			# create
 			fx= _QUERY_FX_CREATOR[@_elWrapper]
+			# check param _queryMethodWrapeprParamRegex
+			if fx in ['updateWith', 'replaceWith']
+				throw new Error "#{fx} expects argument to be '$n' format only" unless _queryMethodWrapeprParamRegex.test @_elWrapperV
+				@_paramToDB= [@_elWrapperV]
 		else if @_options.limit is 1
 			fx= _QUERY_FX_CREATOR.findOne
 		else
@@ -148,12 +154,15 @@ class InsertQueryGen extends QueryBasic
 			fx= _QUERY_FX_CREATOR.insertOne
 		else
 			fx= _QUERY_FX_CREATOR.insertMany
+		# check param _queryMethodWrapeprParamRegex
+		@_paramToDB= @_inserts
 		return fx this
 _defineProperties InsertQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'wtimeout', _argsCheckWp.unsigned
 	insert: value: (doc)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Expected String' unless typeof doc is 'string'
+		throw new Error 'Expected format $n' unless _queryMethodWrapeprParamRegex.test doc
 		@_inserts.push doc
 		# chain
 		this
@@ -161,7 +170,9 @@ _defineProperties InsertQueryGen.prototype,
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Expected list of Strings' unless Array.isArray(docs) and docs.every (doc)-> typeof doc is 'string'
 		inserts= @_inserts
-		inserts.push doc for doc in docs
+		for doc in docs
+			throw new Error 'Expected format $n' unless _queryMethodWrapeprParamRegex.test doc
+			inserts.push doc
 		# chain
 		this
 
@@ -226,13 +237,18 @@ _defineProperties DeleteQueryGen.prototype,
 class ReplaceQueryGen extends QueryBasic
 	constructor: (query, doc)->
 		do super
+		throw new Error 'Expect format $n as second arguments' unless typeof doc is 'string' and _queryMethodWrapeprParamRegex.test doc
 		@_query= query
 		@_doc= doc
 		return
 	###*
 	 * Generate function
 	###
-	build: -> _QUERY_FX_CREATOR.replaceOne this
+	build: ->
+		# check param _queryMethodWrapeprParamRegex
+		@_paramToDB= [@_doc]
+		# fx
+		_QUERY_FX_CREATOR.replaceOne this
 # getters
 _defineProperties ReplaceQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'wtimeout', _argsCheckWp.unsigned

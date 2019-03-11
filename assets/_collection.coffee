@@ -21,6 +21,26 @@ class CollectionRepository
 				value: @Model.fromDB.bind @Model
 		return
 	###*
+	 * define methods
+	###
+	define: (methods)->
+		try
+			throw 'Illegal arguments' unless arguments.length is 1 and typeof methods is 'object' and methods
+			for k,v of methods
+				throw "#{k} already set" if k of this
+				unless typeof v is 'function'
+					if typeof v.build is 'function'
+						v= v.build()
+					else
+						throw "Illegal expression for #{k}"
+				_defineProperty this, k, value: v
+			# chain
+			return this
+		catch err
+			if typeof err is 'string'
+				throw new Error "#{@name}-Define methods>> #{err}"
+			else throw err
+	###*
 	 * Get document by id
 	###
 	get: (docId)->
@@ -143,15 +163,6 @@ class CollectionRepository
 			configurable: on
 		return
 
-
-# define methods
-_colelctionMethods= (methods)->
-	throw new Error "#{@name}-Define methods>> Illegal arguments" unless arguments.length is 1 and typeof methods is 'object' and methods
-
-	# chain
-	return this
-
-
 # Collection getter
 _getCollection= ->
 	db= @_MR.db
@@ -166,7 +177,5 @@ _defineProperties CollectionRepository.prototype,
 	# native mongo collection
 	c: get: _getCollection
 	Collection: get: _getCollection
-	# define methods
-	define: value: _colelctionMethods
 
 

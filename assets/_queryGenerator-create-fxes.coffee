@@ -34,9 +34,22 @@ _QueryGenCreate= (options)->
 			else
 				args= args.map (i)-> "$#{i}= arguments[#{i}]"
 				args.push '$0= this'
+		# doc toDB calls
+		if descriptor._paramToDB
+			docToDB = descriptor._paramToDB
+				.map (param)->
+					"""
+					if(typeof #{param}.toDB === 'function')
+						#{param}= #{param}.toDB();
+					else
+						throw new Error("Argument isn't instance of Model");
+					"""
+				.join ''
+		else
+			docToDB= ''
 		# var declarations
 		if args
-			args= "var #{args.join ','};\n#{fx}"
+			args= "var #{args.join ','};\n#{docToDB}\n#{fx}"
 		else
 			args= fx
 		# function corps
