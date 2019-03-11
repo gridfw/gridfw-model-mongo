@@ -90,6 +90,35 @@ class CollectionRepository
 	indexes: -> @c.indexes()
 
 	###*
+	 * Reload indexes
+	###
+	reloadIndexes: ->
+		# get collection
+		collection= @c
+		throw new Error 'Not connected' unless collection
+		# check indexes has correct names
+		indexes= @_i
+		indexNames= []
+		for idx in indexes
+			throw new Error 'All indexes expected objects' unless typeof idx is 'object' and idx
+			throw new Error "All indexes expect a string name" unless typeof idx.name is 'string'
+			throw new Error "Index duplicated: #{idx.name}" if idx.name in indexNames
+			indexNames.push idx.name
+		# get existing indexes
+		colIndexes= await @c.indexes()
+		colIndexNames= colIndexes.map (idx)-> idx.name
+		if colIndexes and colIndexes.length
+			# check for removed indexes
+			jobs = colIndexes.filter (idx)-> idx.name not in indexNames
+				.map (idx)-> collection.dropIndex idx
+		# insert new indexes
+		jobs ?= []
+		newIndexes= indexes.filter (idx)-> idx.name not in colIndexNames
+		if newIndexes.length
+			jobs.push collection.createIndexes newIndexes
+		# return
+		Promise.all jobs
+	###*
 	 * Rename collection
 	 * @return promise
 	###

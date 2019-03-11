@@ -241,7 +241,7 @@ _defineProperties ReplaceQueryGen.prototype,
 
 ### AGGREGRATION ###	
 class AggregationQueryGen extends QueryBasic
-	constructor: (query)->
+	constructor: ()->
 		do super
 		_defineProperty this, '_pipe', value: []
 		return

@@ -45,7 +45,11 @@ class MongoRepository
 			db:
 				value: db.db db.s.options.dbName
 				configurable: on
-		#TODO add indexes
+		# reload all indexes
+		jobs= []
+		for k,v of @all
+			jobs.push v.reloadIndexes()
+		await Promise.all jobs
 		return db
 	###*
 	 * Close database connection
@@ -103,5 +107,15 @@ class MongoRepository
 			if typeof err is 'string'
 				err= new Error "MongoRepo:: #{err}" 
 			throw err
-				
+	
+	# Interfaces
+	find: (query)-> new FindQueryGen query
+	insert: (doc)-> (new InsertQueryGen()).insert doc
+	insertAll: (docs)-> (new InsertQueryGen()).insertAll docs
+	update: (query, update)-> new UpdateQueryGen query, update
+	delete: (query)-> new DeleteQueryGen query
+	replaceOne: (query, doc)-> new ReplaceQueryGen query, doc
 
+_defineProperties MongoRepository.prototype,
+	aggregate: get: -> new AggregationQueryGen()
+	bulkWrite: get: -> new BulkWriteQueryGen()

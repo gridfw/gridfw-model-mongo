@@ -1,3 +1,14 @@
+userRepo= MongoRepo.from
+	name: 'user'
+	model: UserModel
+	define:
+		findByNameLimitN: MongoRepo.find('{name: $1}').limit('$2')	# findByName(name, limit)
+
+
+
+
+
+
 # find
 MongoRepo
 	.find('{query}')
