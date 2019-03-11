@@ -29,6 +29,10 @@ _queryEleWrapper= (fxName)->
 	value: (arg)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Expected string' unless typeof arg is 'string'
+		# add
+		if (previousFx= @_elWrapper) and previousFx isnt fxName
+			throw new Error "Could not use #{previousFx} and #{fxName} at the same time"
+		@_elWrapper= fxName
 		@['_'+ fxName]= arg
 		# chain
 		this
@@ -38,9 +42,14 @@ _queryGetterWrapper= (diretiveName, value)->
 		@_options[diretiveName] = value
 		# chain
 		this
-_queryGFlagWrapper= (diretiveName)->
+_queryGFlagWrapper= (diretiveName, value)->
+	value= yes if arguments.length is 1
 	get: ->
-		@['_' + diretiveName] = yes
+		# add
+		if (previousFx= @_elWrapper) and previousFx isnt fxName
+			throw new Error "Could not use #{previousFx} and #{fxName} at the same time"
+		@_elWrapper= fxName
+		@['_' + diretiveName] = value
 		# chain
 		this
 
@@ -65,6 +74,8 @@ _defineProperties QueryBasic.prototype,
 		@_native= yes
 		# chain
 		this
+	# build
+	build: -> throw new Error 'Build is missing'
 
 ###*
  * FIND
@@ -77,11 +88,21 @@ _defineProperties QueryBasic.prototype,
 class FindQueryGen extends QueryBasic
 	constructor: (query)->
 		do super
-		@_options.query= query
+		@_query= query
 		return
 	###*
 	 * Generate function
 	###
+	build: ->
+		# distinct
+		if @_elWrapper
+			fx= _QUERY_FX_CREATOR[@_elWrapper]
+		else if @_options.limit is 1
+			fx= _QUERY_FX_CREATOR.findOne
+		else
+			fx= _QUERY_FX_CREATOR.find
+		return fx this
+		
 
 _defineProperties FindQueryGen.prototype,
 	skip: _queryMethodWrapepr 'skip', _argsCheckWp.unsigned
@@ -95,7 +116,7 @@ _defineProperties FindQueryGen.prototype,
 	comment: _queryMethodWrapepr 'comment', _argsCheckWp.string
 
 	# getters
-	'new': _queryGetterWrapper 'new' # returnOriginal
+	'new': _queryGetterWrapper 'returnOriginal', false
 
 	upsert: _queryGetterWrapper 'upsert'
 	explain: _queryGetterWrapper 'explain'
@@ -119,6 +140,15 @@ class InsertQueryGen extends QueryBasic
 		_defineProperty this, '_inserts', value: []
 		@_options.forceServerObjectId= yes # force server ids instead of driver
 		return
+	###*
+	 * Generate function
+	###
+	build: ->
+		if @_inserts.length is 1
+			fx= _QUERY_FX_CREATOR.insertOne
+		else
+			fx= _QUERY_FX_CREATOR.insertMany
+		return fx this
 _defineProperties InsertQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'wtimeout', _argsCheckWp.unsigned
 	insert: value: (doc)->
@@ -147,13 +177,22 @@ class UpdateQueryGen extends QueryBasic
 			_query: value: query
 			_update: value: update
 		return
+	###*
+	 * Generate function
+	###
+	build: ->
+		if @_limit is 1
+			fx= _QUERY_FX_CREATOR.updateOne
+		else
+			fx= _QUERY_FX_CREATOR.updateMany
+		return fx this
 _defineProperties UpdateQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'wtimeout', _argsCheckWp.unsigned
 	upsert: _queryGetterWrapper 'upsert'
 	limit: value: (n)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Limit for delete expected 0 (means all) or 1' unless n in [0, 1]
-		@_options.limit= n
+		@_limit= n
 		# chain
 		this
 
@@ -163,13 +202,22 @@ class DeleteQueryGen extends QueryBasic
 		do super
 		@_options.query= query
 		return
+	###*
+	 * Generate function
+	###
+	build: ->
+		if @_limit is 1
+			fx= _QUERY_FX_CREATOR.deleteOne
+		else
+			fx= _QUERY_FX_CREATOR.deleteMany
+		return fx this
 # getters
 _defineProperties DeleteQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'wtimeout', _argsCheckWp.unsigned
 	limit: value: (n)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Limit for delete expected 0 (means all) or 1' unless n in [0, 1]
-		@_options.limit= n
+		@_limit= n
 		# chain
 		this
 	
@@ -181,6 +229,10 @@ class ReplaceQueryGen extends QueryBasic
 		@_query= query
 		@_doc= doc
 		return
+	###*
+	 * Generate function
+	###
+	build: -> _QUERY_FX_CREATOR.replaceOne this
 # getters
 _defineProperties ReplaceQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'wtimeout', _argsCheckWp.unsigned
@@ -193,6 +245,10 @@ class AggregationQueryGen extends QueryBasic
 		do super
 		_defineProperty this, '_pipe', value: []
 		return
+	###*
+	 * Generate function
+	###
+	build: -> _QUERY_FX_CREATOR.aggregate this
 # getters
 _defineProperties AggregationQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'maxTimeMS', _argsCheckWp.unsigned
@@ -222,6 +278,10 @@ class BulkWriteQueryGen extends QueryBasic
 		do super
 		_defineProperty this, '_write', value: []
 		return
+	###*
+	 * Generate function
+	###
+	build: -> _QUERY_FX_CREATOR.bulkWrite this
 # getters
 _defineProperties BulkWriteQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'wtimeout', _argsCheckWp.unsigned
