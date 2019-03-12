@@ -8,6 +8,13 @@ _defineProperties= Object.defineProperties
 _create= Object.create
 
 ###*
+ * Model plugin
+###
+Model.plugin
+	doc:
+		toBSON: -> @toDB() # DB convert
+
+###*
  * MongoDB plugin for Gridfw-model
 ###
 
