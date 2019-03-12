@@ -1,15 +1,11 @@
 'use strict'
 
-Model = require <%= isProd? '../../gridfw-model': 'gridfw-model'
+Model = require '<%= isProd ? "gridfw-model" : "../../gridfw-model" %>'
 {MongoClient, ObjectID: ObjectId}= require 'mongodb'
 # utils
 _defineProperty= Object.defineProperty
 _defineProperties= Object.defineProperties
 _create= Object.create
-
-<%
-#=include utils.js
-%>
 
 ###*
  * MongoDB plugin for Gridfw-model

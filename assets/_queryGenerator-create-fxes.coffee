@@ -30,28 +30,53 @@ _QueryGenCreate= (options)->
 				i=1
 				while i <= rgx
 					fxArgs.push '$' + i
-				args= ['var $0=this']
+				args= ['$0=this']
 			else
 				args= args.map (i)-> "$#{i}= arguments[#{i}]"
 				args.push '$0= this'
 		# doc toDB calls
 		if descriptor._paramToDB
-			docToDB = descriptor._paramToDB
-				.map (param)->
-					"""
-					if(typeof #{param}.toDB === 'function')
-						#{param}= #{param}.toDB();
-					else
-						throw new Error("Argument isn't instance of Model");
-					"""
-				.join ''
+			docToDB= "var $Arg= #{descriptor._paramToDB}.toDB();"
+		else if descriptor._paramToDB1 and (descriptor._paramToDB1.length or descriptor._paramToDBL.length)
+			docToDB= """
+			try{
+				var $Arg= [#{docToDB.join ','}];
+				var $Arg= [#{
+					descriptor._paramToDB1
+						.map (doc)-> "#{doc}.toDB()"
+						.join ','
+				}];
+				#{
+					descriptor._paramToDBL
+						.map (doc)-> "$Arg.push(#{doc}.map( d=> d.toDB() ))"
+						.join ';'
+				}
+			}catch(err){
+				throw new Error(<%= '`#{options.name}>> Fail to parse params\nCaused by: ${err.stack}`' %>);
+			}
+			"""
 		else
 			docToDB= ''
 		# var declarations
 		if args
-			args= "var #{args.join ','};\n#{docToDB}\n#{fx}"
+			args= ["var #{args.join ','};\n#{docToDB}\n"]
 		else
-			args= fx
+			args= []
+		# add doc convertion
+		if descriptor._convertDocs
+			args.push """
+			var Mdle= this.Model;
+			return this.c
+				.#{fx}
+				.then(resp=>{
+					//TODO add convertion
+					console.warn('----- convertion not added')
+					return resp
+				})
+			"""
+		else
+			args.push "return this.c.#{fx}"
+
 		# function corps
 		fxArgs.push args
 		# return function
@@ -128,11 +153,11 @@ _QUERY_FX_CREATOR=
 	insertOne: _QueryGenCreate
 		name: 'insertOne'
 		options: 'w,wtimeout,j,serializeFunctions,forceServerObjectId,bypassDocumentValidation,session'.split ','
-		fx: (d, options)-> "insertOne(#{d._inserts[0]}, #{options})"
+		fx: (d, options)-> "insertOne($Arg, #{options})"
 	insertMany: _QueryGenCreate
 		name: 'insertMany'
 		options: 'w,wtimeout,j,serializeFunctions,forceServerObjectId,bypassDocumentValidation,session'.split ','
-		fx: (d, options)-> "insertMany([#{d._inserts.join ','}], #{options})"
+		fx: (d, options)-> "insertMany($Arg, #{options})"
 	###
 	# REPLACE DOCUMENTS
 	###

@@ -14,7 +14,7 @@ isProd= gutil.env.hasOwnProperty('prod')
 settings=
 	isProd: isProd
 
-GfwCompiler		= require if isProd then '../compiler' else 'gridfw-compiler'
+GfwCompiler		= require if isProd then 'gridfw-compiler' else '../compiler'
 
 
 # check arguments

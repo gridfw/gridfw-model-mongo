@@ -59,7 +59,7 @@ class QueryBasic
 	constructor: ()->
 		_defineProperties this,
 			_options: value: _create null
-		@_native= no # do convert response doc into models
+		@_convertDocs= no # do not convert response doc into models
 		return
 
 _defineProperties QueryBasic.prototype,
@@ -68,11 +68,6 @@ _defineProperties QueryBasic.prototype,
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Expected object' unless typeof options is 'object' and options
 		Object.assign @_options, options # copy options
-		# chain
-		this
-	# do not convert response documents into models
-	native: get: ->
-		@_native= yes
 		# chain
 		this
 	# build
@@ -90,6 +85,7 @@ class FindQueryGen extends QueryBasic
 	constructor: (query)->
 		do super
 		@_query= query
+		@_convertDocs= yes # do convert docs into models
 		return
 	###*
 	 * Generate function
@@ -102,7 +98,7 @@ class FindQueryGen extends QueryBasic
 			# check param _queryMethodWrapeprParamRegex
 			if fx in ['updateWith', 'replaceWith']
 				throw new Error "#{fx} expects argument to be '$n' format only" unless _queryMethodWrapeprParamRegex.test @_elWrapperV
-				@_paramToDB= [@_elWrapperV]
+				@_paramToDB= @_elWrapperV
 		else if @_options.limit is 1
 			fx= _QUERY_FX_CREATOR.findOne
 		else
@@ -137,42 +133,45 @@ _defineProperties FindQueryGen.prototype,
 	remove: _queryGFlagWrapper 'remove' # remove found document
 	count: _queryGFlagWrapper 'count' # return document count instead of document list
 		
-
+	# do not convert response documents into models
+	native: get: ->
+		@_convertDocs= no # do not convert docs into models
+		# chain
+		this
 
 ### INSERT ###
 class InsertQueryGen extends QueryBasic
 	constructor: ->
 		do super
-		_defineProperty this, '_inserts', value: []
+		_defineProperties this,
+			_inserts: value: []
+			_insertAll: value: []
 		@_options.forceServerObjectId= yes # force server ids instead of driver
 		return
 	###*
 	 * Generate function
 	###
 	build: ->
-		if @_inserts.length is 1
+		if @_inserts.length is 1 and @_insertAll.length is 0
 			fx= _QUERY_FX_CREATOR.insertOne
+			@_paramToDB= @_inserts[0]
 		else
 			fx= _QUERY_FX_CREATOR.insertMany
-		# check param _queryMethodWrapeprParamRegex
-		@_paramToDB= @_inserts
+			@_paramToDB1= @_inserts
+			@_paramToDBL= @_insertAll
 		return fx this
 _defineProperties InsertQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'wtimeout', _argsCheckWp.unsigned
 	insert: value: (doc)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
-		throw new Error 'Expected String' unless typeof doc is 'string'
-		throw new Error 'Expected format $n' unless _queryMethodWrapeprParamRegex.test doc
+		throw new Error 'Expected format $n' unless typeof doc is 'string'and _queryMethodWrapeprParamRegex.test doc
 		@_inserts.push doc
 		# chain
 		this
 	insertAll: value: (docs)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
-		throw new Error 'Expected list of Strings' unless Array.isArray(docs) and docs.every (doc)-> typeof doc is 'string'
-		inserts= @_inserts
-		for doc in docs
-			throw new Error 'Expected format $n' unless _queryMethodWrapeprParamRegex.test doc
-			inserts.push doc
+		throw new Error 'Expected format $n' unless typeof docs is 'string'and _queryMethodWrapeprParamRegex.test docs
+		@_insertAll.push docs
 		# chain
 		this
 
@@ -246,7 +245,7 @@ class ReplaceQueryGen extends QueryBasic
 	###
 	build: ->
 		# check param _queryMethodWrapeprParamRegex
-		@_paramToDB= [@_doc]
+		@_paramToDB= @_doc
 		# fx
 		_QUERY_FX_CREATOR.replaceOne this
 # getters
@@ -259,7 +258,9 @@ _defineProperties ReplaceQueryGen.prototype,
 class AggregationQueryGen extends QueryBasic
 	constructor: ()->
 		do super
-		_defineProperty this, '_pipe', value: []
+		_defineProperties this,
+			_pipe: value: []
+			_pipeAll: value: []
 		return
 	###*
 	 * Generate function
@@ -276,9 +277,8 @@ _defineProperties AggregationQueryGen.prototype,
 		this
 	pipeAll: value: (docs)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
-		throw new Error 'Expected list of Strings' unless Array.isArray(docs) and docs.every (doc)-> typeof doc is 'string'
-		pipe= @_pipe
-		pipe.push doc for doc in docs
+		throw new Error 'Expected String' unless typeof arg is 'string'
+		@_pipeAll.push arg
 		# chain
 		this
 
