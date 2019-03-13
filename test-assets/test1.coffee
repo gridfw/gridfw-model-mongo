@@ -46,6 +46,12 @@ userRepo= MongoRepo.from
 		}
 	]
 
+# find by name
+console.log '>> create method: findByName'
+userRepo.define findByName: MongoRepo.find '{name: $1}'
+
+console.log '>>', userRepo.findByName
+
 do ->
 	try
 		console.log '>> Connect to DB'
@@ -62,7 +68,19 @@ do ->
 		}
 
 		console.log '>> Save to DB'
-		userRepo.save user
+		r= await userRepo.save user
+		console.log '----> inserted: ', r.result
+		console.log '>> user ID: ', user.id
+
+		# get user
+		us2= await userRepo.get user.id
+		console.log '-- Load user from DB: ', JSON.stringify us2
+
+		# find
+		console.log '>> find users by name'
+		users= userRepo.findByName 'khalid'
+		console.log '---- found: ', users.length
+		console.log '---- ', JSON.stringify users
 
 		console.log '>> Disconnect from DB'
 		await MongoRepo.close()

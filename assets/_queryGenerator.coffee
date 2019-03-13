@@ -31,8 +31,9 @@ _queryEleWrapper= (fxName)->
 		throw new Error 'Expected string' unless typeof arg is 'string'
 		# add
 		if (previousFx= @_elWrapper) and previousFx isnt fxName
-			throw new Error "Could not use #{previousFx} and #{fxName} at the same time"
+			throw new Error "Could not use [#{previousFx}] and [#{fxName}] at the same time"
 		@_elWrapper= fxName
+		@_elWrapperV= arg
 		@['_'+ fxName]= arg
 		# chain
 		this
@@ -46,9 +47,9 @@ _queryGFlagWrapper= (diretiveName, value)->
 	value= yes if arguments.length is 1
 	get: ->
 		# add
-		if (previousFx= @_elWrapper) and previousFx isnt fxName
-			throw new Error "Could not use #{previousFx} and #{fxName} at the same time"
-		@_elWrapper= fxName
+		if (previousFx= @_elWrapper) and previousFx isnt diretiveName
+			throw new Error "Could not use [#{previousFx}] and [#{diretiveName}] at the same time"
+		@_elWrapper= diretiveName
 		@_elWrapperV= value
 		@['_' + diretiveName] = value
 		# chain
@@ -96,10 +97,9 @@ class FindQueryGen extends QueryBasic
 			# create
 			fx= _QUERY_FX_CREATOR[@_elWrapper]
 			# check param _queryMethodWrapeprParamRegex
-			if fx in ['updateWith', 'replaceWith']
-				throw new Error "#{fx} expects argument to be '$n' format only" unless _queryMethodWrapeprParamRegex.test @_elWrapperV
-				@_paramToDB= @_elWrapperV
-		else if @_options.limit is 1
+			if @_elWrapper in ['updateWith', 'replaceWith']
+				throw new Error "#{@_elWrapper} expects argument to be '$n' format only" unless _queryMethodWrapeprParamRegex.test @_elWrapperV
+		else if @_options.limit is '1'
 			fx= _QUERY_FX_CREATOR.findOne
 		else
 			fx= _QUERY_FX_CREATOR.find
@@ -115,7 +115,18 @@ _defineProperties FindQueryGen.prototype,
 	hint: _queryMethodWrapepr 'hint', _argsCheckWp.object
 	min: _queryMethodWrapepr 'min', _argsCheckWp.unsigned
 	max: _queryMethodWrapepr 'max', _argsCheckWp.unsigned
-	comment: _queryMethodWrapepr 'comment', _argsCheckWp.string
+	comment:
+		value: (argv)->
+			# check args
+			throw new Error 'comment>> Expected one argument' unless arguments.length is 1
+			throw new Error 'comment>> Expected String' unless typeof argv is 'string'
+			# check it's param
+			unless _queryMethodWrapeprParamRegex.test argv
+				argv= JSON.stringify argv
+			# add
+			@_options.comment= argv
+			# chain
+			this
 
 	# getters
 	'new': _queryGetterWrapper 'returnOriginal', false
@@ -130,7 +141,7 @@ _defineProperties FindQueryGen.prototype,
 	distinct: _queryEleWrapper 'distinct'
 	updateWith: _queryEleWrapper 'updateWith'
 	replaceWith: _queryEleWrapper 'replaceWith'
-	remove: _queryGFlagWrapper 'remove' # remove found document
+	remove: _queryGFlagWrapper 'findOneAndDelete' # remove found document
 	count: _queryGFlagWrapper 'count' # return document count instead of document list
 		
 	# do not convert response documents into models
@@ -145,38 +156,33 @@ class InsertQueryGen extends QueryBasic
 		do super
 		_defineProperties this,
 			_inserts: value: []
-			_insertAll: value: []
-		@_options.forceServerObjectId= yes # force server ids instead of driver
 		return
 	###*
 	 * Generate function
 	###
 	build: ->
-		if @_inserts.length is 1 and @_insertAll.length is 0
+		if @_inserts.length is 2 and @_inserts[1] # single insert
 			fx= _QUERY_FX_CREATOR.insertOne
-			@_paramToDB= @_inserts[0]
 		else
 			fx= _QUERY_FX_CREATOR.insertMany
-			@_paramToDB1= @_inserts
-			@_paramToDBL= @_insertAll
 		return fx this
 _defineProperties InsertQueryGen.prototype,
 	timeout: _queryMethodWrapepr 'wtimeout', _argsCheckWp.unsigned
 	insert: value: (doc)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Expected format $n' unless typeof doc is 'string'and _queryMethodWrapeprParamRegex.test doc
-		@_inserts.push doc
+		@_inserts.push doc, yes
 		# chain
 		this
 	insertAll: value: (docs)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Expected format $n' unless typeof docs is 'string'and _queryMethodWrapeprParamRegex.test docs
-		@_insertAll.push docs
+		@_inserts.push docs, no
 		# chain
 		this
 
 	# flags
-	localId: _queryGetterWrapper 'forceServerObjectId', false # use driver id instead of server generated id
+	forceServerObjectId: _queryGetterWrapper 'forceServerObjectId'
 	ordered: _queryGetterWrapper 'ordered'
 
 ### INSERT ###
@@ -210,7 +216,7 @@ _defineProperties UpdateQueryGen.prototype,
 class DeleteQueryGen extends QueryBasic
 	constructor: (query)->
 		do super
-		@_options.query= query
+		@_query= query
 		return
 	###*
 	 * Generate function
@@ -244,8 +250,6 @@ class ReplaceQueryGen extends QueryBasic
 	 * Generate function
 	###
 	build: ->
-		# check param _queryMethodWrapeprParamRegex
-		@_paramToDB= @_doc
 		# fx
 		_QUERY_FX_CREATOR.replaceOne this
 # getters
@@ -259,8 +263,7 @@ class AggregationQueryGen extends QueryBasic
 	constructor: ()->
 		do super
 		_defineProperties this,
-			_pipe: value: []
-			_pipeAll: value: []
+			_pipe: value: [] # [fx, isSingle, fx2, isSingle, ....]
 		return
 	###*
 	 * Generate function
@@ -272,13 +275,13 @@ _defineProperties AggregationQueryGen.prototype,
 	pipe: value: (arg)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Expected String' unless typeof arg is 'string'
-		@_pipe.push arg
+		@_pipe.push arg, yes
 		# chain
 		this
 	pipeAll: value: (docs)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
-		throw new Error 'Expected String' unless typeof arg is 'string'
-		@_pipeAll.push arg
+		throw new Error 'Expected String' unless typeof docs is 'string'
+		@_pipe.push docs, no
 		# chain
 		this
 
@@ -292,7 +295,8 @@ _defineProperties AggregationQueryGen.prototype,
 class BulkWriteQueryGen extends QueryBasic
 	constructor: ()->
 		do super
-		_defineProperty this, '_write', value: []
+		_defineProperties this,
+			_write: value: []
 		return
 	###*
 	 * Generate function
@@ -304,14 +308,13 @@ _defineProperties BulkWriteQueryGen.prototype,
 	write: value: (arg)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
 		throw new Error 'Expected String' unless typeof arg is 'string'
-		@_write.push arg
+		@_write.push arg, yes
 		# chain
 		this
 	writeAll: value: (docs)->
 		throw new Error 'Expected one argument' unless arguments.length is 1
-		throw new Error 'Expected list of Strings' unless Array.isArray(docs) and docs.every (doc)-> typeof doc is 'string'
-		writeLst= @_write
-		writeLst.push doc for doc in docs
+		throw new Error 'Expected String' unless typeof docs is 'string'
+		@_write.push docs, no
 		# chain
 		this
 	# flags

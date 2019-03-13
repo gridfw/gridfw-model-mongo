@@ -43,7 +43,7 @@ class CollectionRepository
 	 * Get document by id
 	###
 	get: (docId, fields)->
-		doc= await @c.findOne {id: docId}, {projection: fields}
+		doc= await @c.findOne {_id: docId}, {projection: fields}
 		if doc
 			await @_m doc # Model.fetch
 		doc
@@ -57,7 +57,7 @@ class CollectionRepository
 			if doc._id
 				@c.replaceOne {_id: doc._id}, doc, upsert: yes
 			else
-				@c.insertOne doc, forceServerObjectId: yes
+				@c.insertOne doc
 		catch err
 			throw new Error "Expected #{@Model.name} model document" unless doc instanceof @Model
 			throw err
@@ -80,7 +80,7 @@ class CollectionRepository
 				jobs= []
 			# insert docs without ids
 			if docsWithoutIds.length
-				jobs.push collection.insertMany docsWithoutIds, forceServerObjectId: yes
+				jobs.push collection.insertMany docsWithoutIds
 			# return promise
 			return Promise.all jobs
 		catch err
