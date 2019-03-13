@@ -1,7 +1,7 @@
 
 ### elements wrapper ###
 _queryMethodWrapeprParamRegex= /^\$[0-9]+$/
-_argsCheckWpWp=
+_argsCheckWp=
 	object: (v)-> throw 'Expected object or param' unless typeof v is 'object' and v
 	unsigned: (v)-> throw 'Expected positive integer or param' unless Number.isSafeInteger(v) and v>=0
 	string: (v)-> throw 'Expected string or param' unless typeof v is 'string'

@@ -10,15 +10,14 @@ class CollectionRepository
 	 * @param  {List} indexes - list of used indexes
 	###
 	constructor: (mongoRepo, name, model, indexes)->
-		_defineProperties
+		_defineProperties this,
 			name: value: name
 			Model: value: model
 			# private
 			_i: value: indexes
 			_MR: value: mongoRepo
 			# Model.fromDB
-			_m:
-				value: @Model.fromDB.bind @Model
+			_m: value: model.fetch.bind model
 		return
 	###*
 	 * define methods
@@ -43,10 +42,10 @@ class CollectionRepository
 	###*
 	 * Get document by id
 	###
-	get: (docId)->
-		doc= await @c.findOne id: docId
+	get: (docId, fields)->
+		doc= await @c.findOne {id: docId}, {projection: fields}
 		if doc
-			@_m doc # Model.fromDB
+			await @_m doc # Model.fetch
 		doc
 	###*
 	 * Save document
@@ -54,8 +53,6 @@ class CollectionRepository
 	###
 	save: (doc)->
 		try
-			# get storable version on the database
-			doc = doc.toDB()
 			# save to database and return promise
 			if doc._id
 				@c.replaceOne {_id: doc._id}, doc, upsert: yes
@@ -66,8 +63,6 @@ class CollectionRepository
 			throw err
 	saveAll: (docs)->
 		try
-			# get storable version on the database
-			docs = docs.map (doc)-> doc.toDB()
 			# filter docs with and without ids
 			docsWithIds= []
 			docsWithoutIds= []
@@ -115,24 +110,34 @@ class CollectionRepository
 	reloadIndexes: ->
 		# get collection
 		collection= @c
+		throw new Error 'Indexes expected array' unless Array.isArray @_i
 		throw new Error 'Not connected' unless collection
 		# check indexes has correct names
-		indexes= @_i
 		indexNames= []
-		for idx in indexes
+		indexes= []
+		for idx in @_i
 			throw new Error 'All indexes expected objects' unless typeof idx is 'object' and idx
 			throw new Error "All indexes expect a string name" unless typeof idx.name is 'string'
-			throw new Error "Index duplicated: #{idx.name}" if idx.name in indexNames
-			indexNames.push idx.name
+			ob= _create null
+			_assign ob, idx
+			ob.name= INDEX_PREFIX + ob.name
+			throw new Error "Index duplicated: #{idx.name}" if ob.name in indexNames
+			indexNames.push ob.name
+			indexes.push ob
 		# get existing indexes
 		colIndexes= await @c.indexes()
-		colIndexNames= colIndexes.map (idx)-> idx.name
+		colIndexNames= []
+		jobs=[]
 		if colIndexes and colIndexes.length
-			# check for removed indexes
-			jobs = colIndexes.filter (idx)-> idx.name not in indexNames
-				.map (idx)-> collection.dropIndex idx
+			for idx in colIndexes
+				idxName= idx.name
+				if idxName.startsWith INDEX_PREFIX
+					if idxName in indexNames
+						colIndexNames.push idxName
+					else
+						# drop if not anymore
+						jobs.push collection.dropIndex idxName
 		# insert new indexes
-		jobs ?= []
 		newIndexes= indexes.filter (idx)-> idx.name not in colIndexNames
 		if newIndexes.length
 			jobs.push collection.createIndexes newIndexes
@@ -156,7 +161,7 @@ class CollectionRepository
 	 * CallBack when disconnect
 	 * @private
 	###
-	_whenDisconnect:->
+	_whenDisconnect: ->
 		# remove native collection
 		_defineProperty this, 'Collection',
 			value: null

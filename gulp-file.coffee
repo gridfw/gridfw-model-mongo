@@ -4,6 +4,7 @@ gutil			= require 'gulp-util'
 include			= require "gulp-include"
 # rename			= require "gulp-rename"
 coffeescript	= require 'gulp-coffeescript'
+uglify			= require('gulp-uglify-es').default
 pug				= require 'gulp-pug'
 # through 		= require 'through2'
 # path			= require 'path'
@@ -31,13 +32,23 @@ GfwCompiler		= require if isProd then 'gridfw-compiler' else '../compiler'
 
 # compile js (background, popup, ...)
 compileCoffee = ->
-	gulp.src ["assets/index.coffee"]
+	glp= gulp.src ["assets/index.coffee"]
 		.pipe include hardFail: true
-		.pipe gulp.dest "build"
+		# .pipe gulp.dest "build"
 		.pipe GfwCompiler.template(settings).on 'error', GfwCompiler.logError
 		
 		.pipe coffeescript(bare: true).on 'error', GfwCompiler.logError
-		.pipe gulp.dest "build"
+	# if is prod
+	if settings.isProd
+		glp = glp.pipe uglify
+			module: on
+				compress:
+					toplevel: true
+					module: true
+					keep_infinity: on # chrome performance issue
+					warnings: on
+
+	glp.pipe gulp.dest "build"
 		.on 'error', GfwCompiler.logError
 
 compileTests = ->
@@ -45,6 +56,7 @@ compileTests = ->
 		.pipe include hardFail: true
 		# .pipe GfwCompiler.template settings
 		# .pipe gulp.dest "test-build"
+		.pipe GfwCompiler.template(settings).on 'error', GfwCompiler.logError
 		
 		.pipe coffeescript(bare: true).on 'error', GfwCompiler.logError
 		.pipe gulp.dest "test-build"

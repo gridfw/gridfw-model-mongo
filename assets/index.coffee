@@ -6,13 +6,18 @@ Model = require '<%= isProd ? "gridfw-model" : "../../gridfw-model" %>'
 _defineProperty= Object.defineProperty
 _defineProperties= Object.defineProperties
 _create= Object.create
+_assign= Object.assign
 
 ###*
- * Model plugin
+ * Prefexing auto created indexes
 ###
-Model.plugin
-	doc:
-		toBSON: -> @toDB() # DB convert
+INDEX_PREFIX= 'gfw-'
+
+# ###*
+#  * Model plugin
+# ###
+# Model.plugin
+# 	#...
 
 ###*
  * MongoDB plugin for Gridfw-model
@@ -22,7 +27,7 @@ Model.plugin
 #=include _queryGenerator.coffee
 #=include _collection.coffee
 
-class MongoRepository
+module.exports= class MongoRepository
 	constructor: ->
 		# collections
 		_defineProperties this,
@@ -39,8 +44,9 @@ class MongoRepository
 	 * @return {[type]}     [description]
 	###
 	connect: (url, options)->
-		throw new Error 'Already connected' unless @isConnected()
-		db= await MongoClient.connect url
+		throw new Error 'Already connected' if @_db
+		db= await MongoClient.connect url,
+			useNewUrlParser: yes
 		_defineProperties this,
 			_db:
 				value: db
@@ -51,6 +57,9 @@ class MongoRepository
 		# reload all indexes
 		jobs= []
 		for k,v of @all
+			# create collection
+			jobs.push @db.createCollection v.name
+			# reload indexes
 			jobs.push v.reloadIndexes()
 		await Promise.all jobs
 		return db
@@ -61,7 +70,7 @@ class MongoRepository
 		@_db.close(force)
 			.then =>
 				# clear DB instance
-				_defineProperties
+				_defineProperties this,
 					_db:
 						value: null
 						configurable: on
@@ -69,7 +78,7 @@ class MongoRepository
 						value: null
 						configurable: on
 				# disconnect all collections
-				for v of @all
+				for k,v of @all
 					do v._whenDisconnect
 				# return
 				return
@@ -77,7 +86,7 @@ class MongoRepository
 	###*
 	 * 
 	###
-	isConnected: (options)-> MongoClient.isConnected(options)
+	isConnected: (options)-> @_db.isConnected(options)
 
 
 	###*
@@ -99,7 +108,7 @@ class MongoRepository
 			throw "Collection already set: #{name}" if name of @all
 
 			# create repo
-			repo= @all[name]= new CollectionRepository this, name, model, indexes
+			repo= @all[name]= new CollectionRepository this, name, model, options.indexes
 
 			# add methods
 			repo.define options.define if options.define?

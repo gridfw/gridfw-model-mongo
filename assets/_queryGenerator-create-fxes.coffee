@@ -36,19 +36,15 @@ _QueryGenCreate= (options)->
 				args.push '$0= this'
 		# doc toDB calls
 		if descriptor._paramToDB
-			docToDB= "var $Arg= #{descriptor._paramToDB}.toDB();"
+			docToDB= "var $Arg= #{descriptor._paramToDB}"
 		else if descriptor._paramToDB1 and (descriptor._paramToDB1.length or descriptor._paramToDBL.length)
 			docToDB= """
 			try{
 				var $Arg= [#{docToDB.join ','}];
-				var $Arg= [#{
-					descriptor._paramToDB1
-						.map (doc)-> "#{doc}.toDB()"
-						.join ','
-				}];
+				var $Arg= [#{descriptor._paramToDB1.join ','}];
 				#{
 					descriptor._paramToDBL
-						.map (doc)-> "$Arg.push(#{doc}.map( d=> d.toDB() ))"
+						.map (doc)-> "for(var argI=0, argLen=#{doc}.length; ++argI) $Arg.push(#{doc}[argI]);"
 						.join ';'
 				}
 			}catch(err){
