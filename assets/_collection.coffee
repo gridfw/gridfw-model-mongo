@@ -10,11 +10,13 @@ class CollectionRepository
 	 * @param  {List} indexes - list of used indexes
 	###
 	constructor: (mongoRepo, name, model, indexes)->
+		throw new Error 'Indexes expected array' if indexes and not Array.isArray indexes
+		
 		_defineProperties this,
 			name: value: name
 			Model: value: model
 			# private
-			_i: value: indexes
+			_i: value: indexes or []
 			_MR: value: mongoRepo
 			# Model.fromDB
 			_m: value: model.fetch.bind model
@@ -93,11 +95,6 @@ class CollectionRepository
 	 * @return promise
 	###
 	drop: -> @c.drop()
-	###*
-	 * Drop all indexes
-	 * @return promise
-	###
-	dropIndexes: -> @c.dropIndexes()
 
 	###*
 	 * Get all indexes
@@ -110,7 +107,7 @@ class CollectionRepository
 	reloadIndexes: ->
 		# get collection
 		collection= @c
-		throw new Error 'Indexes expected array' unless Array.isArray @_i
+		
 		throw new Error 'Not connected' unless collection
 		# check indexes has correct names
 		indexNames= []
@@ -149,7 +146,7 @@ class CollectionRepository
 	###
 	rename: (newName, dropTarget)->
 		# check if already exists
-		if @_MR.all[newName]
+		if @_MR.all.hasOwnProperty newName
 			throw new Error "An other collection set with name: #{newName}" unless dropTarget
 			delete @_MR.all[newName]
 		# drop from mongo

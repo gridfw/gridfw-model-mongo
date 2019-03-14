@@ -27,12 +27,30 @@ INDEX_PREFIX= 'gfw-'
 #=include _queryGenerator.coffee
 #=include _collection.coffee
 
+_allProxyToString= -> "Repositories[#{Reflect.ownKeys(this).join ', '}]"
+ALL_PROXY_DESCRIPTOR=
+	get: (obj, attr) ->
+		if typeof attr is 'string'
+			attrL= attr.toLowerCase()
+			if obj.all.hasOwnProperty attrL
+				throw new Error "Please use lower-case names to access repositories: [#{attrL}] instead of [#{attr}]"
+			else
+				throw new Error "Unknown repository: #{attr}"
+		return
+	set: (obj, attr, value) -> throw new Error "Please don't set values manually to this object!"
+
+# MONGO REPOSITORY
 module.exports= class MongoRepository
 	constructor: ->
+		# all repositories queu
+		allRepo= _create (new Proxy this, ALL_PROXY_DESCRIPTOR),
+			inspect: value: _allProxyToString
+			toString: value: _allProxyToString
+			hasOwnProperty: value: Object.hasOwnProperty
 		# collections
 		_defineProperties this,
 			# map all collections
-			all: value: _create null
+			all: value: allRepo
 			MongoClient: value: MongoClient
 		return
 	# connect to MongoDB
@@ -103,12 +121,17 @@ module.exports= class MongoRepository
 			throw 'Illegal options.model' unless model? and model[Model.SCHEMA]
 			name= options.name or model.name
 			throw 'Options.name expected string' unless typeof name is 'string'
+			name= name.toLowerCase() # collection name is case insensitive
 
 			# check not already set
-			throw "Collection already set: #{name}" if name of @all
+			throw "Collection already set: #{name}" if @all.hasOwnProperty name
 
 			# create repo
-			repo= @all[name]= new CollectionRepository this, name, model, options.indexes
+			repo= new CollectionRepository this, name, model, options.indexes
+			_defineProperty @all, name,
+				value: repo
+				enumerable: yes
+				configurable: yes
 
 			# add methods
 			repo.define options.define if options.define?

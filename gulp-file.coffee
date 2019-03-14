@@ -42,11 +42,11 @@ compileCoffee = ->
 	if settings.isProd
 		glp = glp.pipe uglify
 			module: on
-				compress:
-					toplevel: true
-					module: true
-					keep_infinity: on # chrome performance issue
-					warnings: on
+			compress:
+				toplevel: true
+				module: true
+				keep_infinity: on # chrome performance issue
+				warnings: on
 
 	glp.pipe gulp.dest "build"
 		.on 'error', GfwCompiler.logError
