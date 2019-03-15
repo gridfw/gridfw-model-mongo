@@ -38,10 +38,8 @@ _QueryGenCreate= (options)->
 				args.push '$0= this'
 
 		# var declarations
-		if args
+		if args.length
 			args= ["var #{args.join ','};\n"]
-		else
-			args= []
 		# add doc convertion
 		if descriptor._convertDocs
 			args.push """
