@@ -1,6 +1,10 @@
 # require
-Model= require '<%= isProd? "gridfw-model" : "../../gridfw-model" %>'
+ModelClass= require '<%= isProd? "gridfw-model" : "../../gridfw-model" %>'
 MongoModelRepo= require '..'
+
+# create Repo
+MongoRepo= new MongoModelRepo()
+Model= new ModelClass()
 
 # create user schema
 console.log '>> Create user model'
@@ -24,8 +28,6 @@ UserModel= Model.from
 
 		methodSample: -> 'hello world'
 
-# create Repo
-MongoRepo= new MongoModelRepo()
 # create collection
 console.log '>> Create user repository'
 userRepo= MongoRepo.from
@@ -78,7 +80,7 @@ do ->
 
 		# find
 		console.log '>> find users by name'
-		users= userRepo.findByName 'khalid'
+		users= userRepo.findByName('khalid')
 		console.log '---- found: ', users.length
 		console.log '---- ', JSON.stringify users
 

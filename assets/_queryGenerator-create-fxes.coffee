@@ -44,9 +44,7 @@ _QueryGenCreate= (options)->
 		if descriptor._convertDocs
 			args.push """
 			var Mdle= this.Model;
-			return this.c
-				.#{fx}
-				.then(resp=>{
+			return this.c.#{fx}.then(resp=>{
 					//TODO add convertion
 					console.warn('----- convertion not added')
 					return resp
@@ -57,6 +55,7 @@ _QueryGenCreate= (options)->
 
 		# function corps
 		fxArgs.push args.join ''
+
 		# return function
 		new (Function.prototype.bind.apply Function, fxArgs)
 

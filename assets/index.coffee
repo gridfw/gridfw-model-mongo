@@ -1,6 +1,6 @@
 'use strict'
 
-Model = require '<%= isProd ? "gridfw-model" : "../../gridfw-model" %>'
+ModelClz = require '<%= isProd ? "gridfw-model" : "../../gridfw-model" %>'
 {MongoClient, ObjectID: ObjectId}= require 'mongodb'
 # utils
 _defineProperty= Object.defineProperty
@@ -74,7 +74,8 @@ module.exports= class MongoRepository
 				configurable: on
 		# reload all indexes
 		jobs= []
-		for k,v of @all
+		for k in Object.keys @all
+			v= @all[k]
 			# create collection
 			jobs.push @db.createCollection v.name
 			# reload indexes
@@ -118,7 +119,7 @@ module.exports= class MongoRepository
 		try
 			throw 'Illegal arguments' unless arguments.length is 1 and typeof options is 'object' and options
 			model= options.model
-			throw 'Illegal options.model' unless model? and model[Model.SCHEMA]
+			throw 'Illegal options.model' unless model? and model[ModelClz.SCHEMA]
 			name= options.name or model.name
 			throw 'Options.name expected string' unless typeof name is 'string'
 			name= name.toLowerCase() # collection name is case insensitive
