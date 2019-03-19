@@ -12,6 +12,7 @@ class CollectionRepository
 	constructor: (mongoRepo, name, model, indexes)->
 		throw new Error 'Indexes expected array' if indexes and not Array.isArray indexes
 		
+		modelFetcher= model.fetch.bind model
 		_defineProperties this,
 			name: value: name
 			Model: value: model
@@ -19,7 +20,15 @@ class CollectionRepository
 			_i: value: indexes or []
 			_MR: value: mongoRepo
 			# Model.fromDB
-			_m: value: model.fetch.bind model
+			_m: value: modelFetcher
+			_mAll: value: (arr)->
+				return arr unless arr? # null or undefined
+				if Array.isArray arr
+					return arr.map modelFetcher
+				else
+					return modelFetcher arr
+			# iterrator wrapper
+			_it: value: (cursor)-> new CursorIterator cursor, modelFetcher
 		return
 	###*
 	 * define methods

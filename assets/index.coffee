@@ -26,6 +26,7 @@ INDEX_PREFIX= 'gfw-'
 #=include _queryGenerator-create-fxes.coffee
 #=include _queryGenerator.coffee
 #=include _collection.coffee
+#=include _cursor-iterator.coffee
 
 _allProxyToString= -> "Repositories[#{Reflect.ownKeys(this).join ', '}]"
 ALL_PROXY_DESCRIPTOR=
@@ -72,15 +73,14 @@ module.exports= class MongoRepository
 			db:
 				value: db.db db.s.options.dbName
 				configurable: on
-		# reload all indexes
-		jobs= []
+		# list of all collections
+		collections= []
 		for k in Object.keys @all
-			v= @all[k]
-			# create collection
-			jobs.push @db.createCollection v.name
-			# reload indexes
-			jobs.push v.reloadIndexes()
-		await Promise.all jobs
+			collections.push @all[k]
+		# create all collections of not already
+		await collections.map (c)=> @db.createCollection(c.name).then (v)-> console.log '---v: ', v
+		# reload indexes
+		await collections.map (c)=> c.reloadIndexes()
 		return db
 	###*
 	 * Close database connection

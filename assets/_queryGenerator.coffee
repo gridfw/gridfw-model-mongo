@@ -149,6 +149,8 @@ _defineProperties FindQueryGen.prototype,
 		@_convertDocs= no # do not convert docs into models
 		# chain
 		this
+	toArray: _queryGFlagWrapper 'toArray' # return results as array
+	iterator: _queryGFlagWrapper 'iterator' # return iterator
 
 ### INSERT ###
 class InsertQueryGen extends QueryBasic
@@ -290,6 +292,14 @@ _defineProperties AggregationQueryGen.prototype,
 	# flags
 	explain: _queryGetterWrapper 'explain'
 	raw: _queryGetterWrapper 'raw'
+
+	# do not convert response documents into models
+	native: get: ->
+		@_convertDocs= no # do not convert docs into models
+		# chain
+		this
+	toArray: _queryGFlagWrapper 'toArray' # return results as array
+	iterator: _queryGFlagWrapper 'iterator' # return iterator
 
 ### BULK WRITE ###
 class BulkWriteQueryGen extends QueryBasic

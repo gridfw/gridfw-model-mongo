@@ -44,11 +44,7 @@ _QueryGenCreate= (options)->
 		if descriptor._convertDocs
 			args.push """
 			var Mdle= this.Model;
-			return this.c.#{fx}.then(resp=>{
-					//TODO add convertion
-					console.warn('----- convertion not added')
-					return resp
-				});
+			return this.c.#{fx};
 			"""
 		else
 			args.push "return this.c.#{fx};"
@@ -86,21 +82,38 @@ _QueryGenLoadParam= (arr)->
 # Find one
 _createFindOptions= 'limit,sort,projection,skip,hint,explain,timeout,tailable,batchSize,returnKey,min,max,showDiskLoc,comment,raw,promoteLongs,promoteValues,promoteBuffers,readPreference,partial,maxTimeMS,collation,session'.split ','
 
+# find and modify cb
+findAndModifyCb= '.then(async (doc)=>{if(doc and doc.value){doc.value= await this._m(doc.value);} return doc; });'
+
 _QUERY_FX_CREATOR=
 	###
 	# Aggregate
+	TODO
 	###
 	aggregate: _QueryGenCreate
 		name: 'aggregate'
 		options: 'readPreference,cursor,explain,allowDiskUse,maxTimeMS,bypassDocumentValidation,raw,promoteLongs,promoteValues,promoteBuffers,collation,comment,hintsession'.split ','
-		fx: (d, options)->"aggregate(#{_QueryGenLoadParam d._pipe}#{options})"
+		fx: (d, options)->
+			# load data
+			op= "return this.c.aggregate(#{_QueryGenLoadParam d._pipe}#{options})"
+			# next operation
+			isNative= d._native
+			if d._elWrapper is 'toArray'
+				op= "#{op}.toArray()#{if isNative then '' else '.then(this._mAll)'}"
+			else if d._elWrapper is 'iterator'
+				unless isNative
+					op= "this._it(#{op});"
+			else unless isNative
+				throw new Error 'Missing ".toArray", ".iterator" or ".native"'
+			# return
+			op
 	###
 	# Bulk Write
 	###
 	bulkWrite: _QueryGenCreate
 		name: 'bulkWrite'
 		options: 'w,wtimeout,j,serializeFunctions,ordered,bypassDocumentValidation,session'.split ','
-		fx: (d, options)-> "bulkWrite(#{_QueryGenLoadParam d._write}#{options})"
+		fx: (d, options)-> "this.c.bulkWrite(#{_QueryGenLoadParam d._write}#{options})"
 	###
 	# FIND DOCUMENTS
 	###
@@ -108,72 +121,102 @@ _QUERY_FX_CREATOR=
 	count: _QueryGenCreate
 		name: 'countDocuments'
 		options: 'collation,hint,limit,maxTimeMS,skip'.split ','
-		fx: (d, options)-> "countDocuments(#{d._query}#{options})"
+		fx: (d, options)-> "this.c.countDocuments(#{d._query}#{options})"
 	# distinct
 	distinct: _QueryGenCreate
 		name: 'distinct'
 		options: 'readPreference,maxTimeMS,session'.split ','
-		fx: (d, options)-> "distinct('#{d._distinct}', #{d._query}#{options})"
+		fx: (d, options)-> "this.c.distinct('#{d._distinct}', #{d._query}#{options})"
 	# find
 	find: _QueryGenCreate
 		name: 'find'
 		options: _createFindOptions
-		fx: (d, options)-> "find(#{d._query}#{options})"
+		fx: (d, options)->
+			# load data
+			op= "return this.c.find(#{d._query}#{options})"
+			# next operation
+			isNative= d._native
+			if d._elWrapper is 'toArray'
+				op= "#{op}.toArray()#{if isNative then '' else '.then(this._mAll)'}"
+			else if d._elWrapper is 'iterator'
+				unless isNative
+					op= "this._it(#{op});"
+			else unless isNative
+				throw new Error 'Missing ".toArray", ".iterator" or ".native"'
+			# return
+			op
 	# find one
 	findOne: _QueryGenCreate
 		name: 'findOne'
 		options: _createFindOptions
-		fx: (d, options)-> "findOne(#{d._query}#{options})"
+		fx: (d, options)->
+			op= "return this.c.findOne(#{d._query}#{options})"
+			unless d._native
+				op= "#{op}.then(this._m)"
+			op
 	# find one and delete
 	findOneAndDelete: _QueryGenCreate
 		name: 'findOneAndDelete'
 		options: 'projection,sort,maxTimeMS,session'.split ','
-		fx: (d, options)-> "findOneAndDelete(#{d._query}#{options})"
+		fx: (d, options)->
+			op= "this.c.findOneAndDelete(#{d._query}#{options})"
+			unless d._native
+				op= "#{op}#{findAndModifyCb}"
+			return op
 	# find one and replace
 	replaceWith: _QueryGenCreate
 		name: 'findOneAndReplace'
 		options: 'projection,sort,maxTimeMS,upsert,returnOriginal,session'.split ','
-		fx: (d, options)-> "findOneAndReplace(#{d._query}, #{d._replaceWith}#{options})"
+		fx: (d, options)->
+			op= "this.c.findOneAndReplace(#{d._query}, #{d._replaceWith}#{options})"
+			unless d._native
+				op= "#{op}#{findAndModifyCb}"
+			return op
+			
 	# find one and update
 	updateWith: _QueryGenCreate
 		name: 'findOneAndUpdate'
 		options: 'projection,sort,maxTimeMS,upsert,returnOriginal,session,arrayFilters'.split ','
-		fx: (d, options)-> "findOneAndUpdate(#{d._query}, #{d._updateWith}#{options})"
+		fx: (d, options)->
+			op= "this.c.findOneAndUpdate(#{d._query}, #{d._updateWith}#{options})"
+			unless d._native
+				op= "#{op}#{findAndModifyCb}"
+			return op
 	###
 	# DELETE DOCUMENTS
 	###
 	deleteMany: _QueryGenCreate
 		options: 'w,wtimeout,j,session'.split ','
-		fx: (d, options)-> "deleteMany(#{d._query}#{options})"
+		fx: (d, options)-> "this.deleteMany(#{d._query}#{options})"
 	deleteOne: _QueryGenCreate
 		options: 'w,wtimeout,j,session'.split ','
-		fx: (d, options)-> "deleteOne(#{d._query}#{options})"
+		fx: (d, options)-> "this.c.deleteOne(#{d._query}#{options})"
 	###
 	# INSERT DOCUMENTS
 	###
 	insertOne: _QueryGenCreate
 		name: 'insertOne'
 		options: 'w,wtimeout,j,serializeFunctions,forceServerObjectId,bypassDocumentValidation,session'.split ','
-		fx: (d, options)-> "insertOne(#{d._inserts[0]}#{options})"
+		fx: (d, options)-> "this.c.insertOne(#{d._inserts[0]}#{options})"
 	insertMany: _QueryGenCreate
 		name: 'insertMany'
 		options: 'w,wtimeout,j,serializeFunctions,forceServerObjectId,bypassDocumentValidation,session'.split ','
-		fx: (d, options)-> "insertMany(#{_QueryGenLoadParam d._inserts}#{options})"
+		fx: (d, options)-> "this.c.insertMany(#{_QueryGenLoadParam d._inserts}#{options})"
 	###
 	# REPLACE DOCUMENTS
 	###
 	replaceOne: _QueryGenCreate
 		name: 'replaceOne'
 		options: 'upsert,w,wtimeout,j,bypassDocumentValidation,session'.split ','
-		fx: (d, options)-> "replaceOne(#{d._query}, #{d._doc}#{options})"
+		fx: (d, options)-> "this.c.replaceOne(#{d._query}, #{d._doc}#{options})"
 	###
 	# UPDATE DOCUMENTS
 	###
 	updateMany: _QueryGenCreate
 		name: 'updateMany'
 		options: 'upsert,w,wtimeout,j,arrayFilters,session'.split ','
-		fx: (d, options)-> "updateMany(#{d._query}, #{d._update}#{options})"
+		fx: (d, options)-> "this.c.updateMany(#{d._query}, #{d._update}#{options})"
 	updateOne: _QueryGenCreate
 		name: 'updateOne'
 		options: 'upsert,w,wtimeout,j,bypassDocumentValidation,arrayFilters,session'.split ','
-		fx: (d, options)-> "updateOne(#{d._query}, #{d._update}#{options})"
+		fx: (d, options)-> "this.c.updateOne(#{d._query}, #{d._update}#{options})"
