@@ -78,7 +78,7 @@ module.exports= class MongoRepository
 		for k in Object.keys @all
 			collections.push @all[k]
 		# create all collections of not already
-		await collections.map (c)=> @db.createCollection(c.name).then (v)-> console.log '---v: ', v
+		await collections.map (c)=> @db.createCollection(c.name)
 		# reload indexes
 		await collections.map (c)=> c.reloadIndexes()
 		return db
