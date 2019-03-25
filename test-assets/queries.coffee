@@ -8,11 +8,25 @@ console.log '>> Test queries'
 # console.log '>> FIND'
 
 # simple
-# op= '{name:$1}'
+op= {name:'khalid'}
 # op= '{name:$1, age: {$le: $2}}'
-# console.log "#{op} >>"
-# console.log MongoRepo.find(op).build().toString()
-
+console.log "aggregate >>", MongoRepo.aggregate([$match: op]).explain.timeout(524525).toString()
+console.log "bulkwrite >>", MongoRepo.bulkwrite([op]).toString()
+console.log "count >>", MongoRepo.count(op).toString()
+console.log "exists >>", MongoRepo.exists(op).toString()
+console.log "deleteMany >>", MongoRepo.deleteMany(op).toString()
+console.log "deleteOne >>", MongoRepo.deleteOne(op).toString()
+console.log "distinct >>", MongoRepo.distinct('field', op).toString()
+console.log "findMany >>", MongoRepo.findMany(op).toString()
+console.log "findOne >>", MongoRepo.findOne(op).toString()
+console.log "findOneAndDelete >>", MongoRepo.findOneAndDelete(op).toString()
+console.log "findOneAndReplace >>", MongoRepo.findOneAndReplace(op, {echo:1}).toString()
+console.log "findOneAndUpdate >>", MongoRepo.findOneAndUpdate(op, {$set:{cc:512}}).toString()
+console.log "insertOne >>", MongoRepo.insertOne(op).toString()
+console.log "insertMany >>", MongoRepo.insertMany([op]).toString()
+console.log "replaceOne >>", MongoRepo.replaceOne(op, {kk:5}).toString()
+console.log "updateMany >>", MongoRepo.updateMany(op, {$set:{oo:525}}).toString()
+console.log "updateOne >>", MongoRepo.updateOne(op, {$set:{pp:85}}).toString()
 
 # skip
 # console.log ">>"

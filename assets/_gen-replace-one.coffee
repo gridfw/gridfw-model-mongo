@@ -16,7 +16,7 @@ class ReplaceOneQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "replaceOne(#{JSON.stringify @_query}, #{JSON.stringify @_doc}, #{@_buildOptions})"
+	_buildMain: -> "replaceOne(#{_stringifyQuery @_query}, #{_stringifyQuery @_doc}, #{@_buildOptions()})"
 
 _defineProperties ReplaceOneQuery.prototype,
 	upsert: get: -> @option 'upsert', yes

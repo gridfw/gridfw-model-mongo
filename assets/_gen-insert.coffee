@@ -13,7 +13,7 @@ class InsertOneQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "insertOne(#{JSON.stringify @_doc}, #{@_buildOptions})"
+	_buildMain: -> "insertOne(#{_stringifyQuery @_doc}, #{@_buildOptions()})"
 
 
 ###*
@@ -27,4 +27,4 @@ class InsertManyQuery extends InsertOneQuery
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "insertMany(#{JSON.stringify @_docs}, #{@_buildOptions})"
+	_buildMain: -> "insertMany(#{_stringifyQuery @_docs}, #{@_buildOptions()})"

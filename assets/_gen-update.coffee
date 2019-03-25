@@ -17,7 +17,7 @@ class UpdateManyQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "updateMany(#{JSON.stringify @_query}, #{JSON.stringify @_update}, #{@_buildOptions})"
+	_buildMain: -> "updateMany(#{_stringifyQuery @_query}, #{_stringifyQuery @_update}, #{@_buildOptions()})"
 
 _defineProperties UpdateManyQuery.prototype,
 	upsert: get: -> @option 'upsert', yes
@@ -41,4 +41,4 @@ class UpdateOneQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "updateOne(#{JSON.stringify @_query}, #{JSON.stringify @_update}, #{@_buildOptions})"
+	_buildMain: -> "updateOne(#{_stringifyQuery @_query}, #{_stringifyQuery @_update}, #{@_buildOptions()})"

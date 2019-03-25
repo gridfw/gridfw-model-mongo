@@ -16,17 +16,17 @@ INDEX_PREFIX= 'gfw-'
 # ###*
 #  * Model plugin
 # ###
-# Model.plugin
-# 	#...
+#=require _gen-basic.coffee
+#=require _gen-*.coffee
 
 ###*
  * MongoDB plugin for Gridfw-model
 ###
 
-#=include _queryGenerator-create-fxes.coffee
-#=include _queryGenerator.coffee
-#=include _collection.coffee
-#=include _cursor-iterator.coffee
+#c=include _queryGenerator-create-fxes.coffee
+#c=include _queryGenerator.coffee
+#c=include _collection.coffee
+#c=include _cursor-iterator.coffee
 
 _allProxyToString= -> "Repositories[#{Reflect.ownKeys(this).join ', '}]"
 ALL_PROXY_DESCRIPTOR=
@@ -39,6 +39,11 @@ ALL_PROXY_DESCRIPTOR=
 				throw new Error "Unknown repository: #{attr}"
 		return
 	set: (obj, attr, value) -> throw new Error "Please don't set values manually to this object!"
+
+
+<%
+	#=include _gen-query.js
+%>
 
 # MONGO REPOSITORY
 module.exports= class MongoRepository
@@ -144,43 +149,28 @@ module.exports= class MongoRepository
 				err= new Error "MongoRepo:: #{err}" 
 			throw err
 	# parse ObjectId
-	parseObjectId: (value)-> ObjectId.createFromHexString value
+	parseObjectId: (value)->ObjectId.createFromHexString value
 	# Interfaces
-	aggregate:	(pipeline)-> new AggregateQuery(pipeline)
-	bulkwrite:	(arr)-> new BulkWriteQuery(arr)
-
+	aggregate: <%= _genQuery('AggregateQuery', {pipeline:'array'}) %>
+	bulkwrite: <%= _genQuery('BulkWriteQuery', {arr: 'array'}) %>
 	### get document count ###
-	count:		(query)-> new DocumentCountQuery(query)
-	exists:		(query)-> new ExistsQuery(query)
+	count: <%= _genQuery('DocumentCountQuery', {query: 'plainObject'}) %>
+	exists: <%= _genQuery('ExistsQuery', {query: 'plainObject'}) %>
 
-	deleteMany:	(query)-> new DeleteManyQuery query
-	deleteOne:	(query)-> new DeleteOneQuery query
+	deleteMany: <%= _genQuery('DeleteManyQuery', {query: 'plainObject'}) %>
+	deleteOne: <%= _genQuery('DeleteOneQuery', {query: 'plainObject'}) %>
 	
-	distinct:	(query)-> new DistinctQuery query
-	findMany:	(query)-> new FindManyQuery query
-	findOne:	(query)-> new FindOneQuery query
-	findOneAndDelete:	(query)-> new FindOneAndDeleteQuery query
-	findOneAndReplace:	(query)-> new FindOneAndReplaceQuery query, replacement
-	findOneAndUpdate:	(query)-> new FindOneAndUpdateQuery query, update
+	distinct: <%= _genQuery('DistinctQuery', {key:'string', query: 'plainObject'}) %>
+	findMany: <%= _genQuery('FindManyQuery', {query: 'plainObject'}) %>
+	findOne: <%= _genQuery('FindOneQuery', {query: 'plainObject'}) %>
+	findOneAndDelete: <%= _genQuery('FindOneAndDeleteQuery', {query: 'plainObject'}) %>
+	findOneAndReplace: <%= _genQuery('FindOneAndReplaceQuery', {query: 'plainObject', replacement: 'plainObject'}) %>
+	findOneAndUpdate: <%= _genQuery('FindOneAndUpdateQuery', {query: 'plainObject', update:'plainObject'}) %>
 
-	insertOne:	(doc)-> new InsertOneQuery doc
-	insertMany:	(docs)-> new InsertManyQuery docs
+	insertOne: <%= _genQuery('InsertOneQuery', {doc: 'plainObject'}) %>
+	insertMany: <%= _genQuery('InsertManyQuery', {query: 'array'}) %>
 
-	replaceOne:	(docs)-> new ReplaceOneQuery query, doc
+	replaceOne: <%= _genQuery('ReplaceOneQuery', {query: 'plainObject', doc:'plainObject'}) %>
 
-	updateMany:	(docs)-> new UpdateManyQuery query, update
-	updateOne:	(docs)-> new UpdateOneQuery query, update
-	# 
-	# 
-	# 
-	# 
-	find: (query)-> new FindQueryGen query
-	insert: (doc)-> (new InsertQueryGen()).insert doc
-	insertAll: (docs)-> (new InsertQueryGen()).insertAll docs
-	update: (query, update)-> new UpdateQueryGen query, update
-	delete: (query)-> new DeleteQueryGen query
-	replaceOne: (query, doc)-> new ReplaceQueryGen query, doc
-
-_defineProperties MongoRepository.prototype,
-	aggregate: get: -> new AggregationQueryGen()
-	bulkWrite: get: -> new BulkWriteQueryGen()
+	updateMany: <%= _genQuery('UpdateManyQuery', {query: 'plainObject', update:'plainObject'}) %>
+	updateOne: <%= _genQuery('UpdateOneQuery', {query: 'plainObject', update:'plainObject'}) %>

@@ -16,7 +16,7 @@ class BulkWriteQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "bulkWrite(#{JSON.stringify @_writes}, #{@_buildOptions})"
+	_buildMain: -> "bulkWrite(#{_stringifyQuery @_writes}, #{@_buildOptions()})"
 
 
 ###

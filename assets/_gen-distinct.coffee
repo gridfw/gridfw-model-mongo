@@ -14,4 +14,4 @@ class DistinctQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "distinct(#{JSON.stringify @_key}, #{JSON.stringify @_query}, #{@_buildOptions})"
+	_buildMain: -> "distinct(#{JSON.stringify @_key}, #{_stringifyQuery @_query}, #{@_buildOptions()})"

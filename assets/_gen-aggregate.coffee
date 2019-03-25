@@ -13,4 +13,4 @@ class AggregateQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "aggregate(#{JSON.stringify @_pipeline}, #{@_buildOptions})"
+	_buildMain: -> "aggregate(#{_stringifyQuery @_pipeline}, #{@_buildOptions()})"

@@ -16,7 +16,7 @@ class DeleteOneQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "deleteOne(#{JSON.stringify @_query}, #{@_buildOptions})"
+	_buildMain: -> "deleteOne(#{_stringifyQuery @_query}, #{@_buildOptions()})"
 
 ###*
  * Delete many
@@ -27,4 +27,4 @@ class DeleteManyQuery extends DeleteOneQuery
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "deleteMany(#{JSON.stringify @_query}, #{@_buildOptions})"
+	_buildMain: -> "deleteMany(#{_stringifyQuery @_query}, #{@_buildOptions()})"

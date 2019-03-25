@@ -45,3 +45,9 @@ class QueryGen
 _defineProperties QueryGen.prototype,
 	explain: get: -> @option 'explain', yes
 	raw: get: -> @option 'raw', yes
+
+### normalise query ###
+_stringifyQuery= (query)->
+	unless typeof query is 'string'
+		query= JSON.stringify query
+	query

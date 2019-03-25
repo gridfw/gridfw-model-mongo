@@ -19,7 +19,7 @@ class FindManyQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "find(#{JSON.stringify @_query}, #{@_buildOptions})"
+	_buildMain: -> "find(#{_stringifyQuery @_query}, #{@_buildOptions()})"
 
 ###
 # GETTERS
@@ -40,7 +40,7 @@ class FindOneQuery extends FindManyQuery
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "findOne(#{JSON.stringify @_query}, #{@_buildOptions})"
+	_buildMain: -> "findOne(#{_stringifyQuery @_query}, #{@_buildOptions()})"
 
 ###*
  * findOneAndDeleteQuery
@@ -58,7 +58,7 @@ class FindOneAndDeleteQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "findOneAndDelete(#{JSON.stringify @_query}, #{@_buildOptions})"
+	_buildMain: -> "findOneAndDelete(#{_stringifyQuery @_query}, #{@_buildOptions()})"
 
 
 ###*
@@ -75,7 +75,7 @@ class FindOneAndReplaceQuery extends FindOneAndDeleteQuery
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "findOneAndReplace(#{JSON.stringify @_query}, #{JSON.stringify @_rep}, #{@_buildOptions})"
+	_buildMain: -> "findOneAndReplace(#{_stringifyQuery @_query}, #{_stringifyQuery @_rep}, #{@_buildOptions()})"
 _defineProperties FindOneAndReplaceQuery.prototype,
 	upsert: get: -> @option 'upsert', yes
 	'new': get: -> @option 'returnOriginal', no
@@ -96,5 +96,5 @@ class FindOneAndUpdateQuery extends FindOneAndReplaceQuery
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "findOneAndUpdate(#{JSON.stringify @_query}, #{JSON.stringify @_update}, #{@_buildOptions})"
+	_buildMain: -> "findOneAndUpdate(#{_stringifyQuery @_query}, #{_stringifyQuery @_update}, #{@_buildOptions()})"
 
