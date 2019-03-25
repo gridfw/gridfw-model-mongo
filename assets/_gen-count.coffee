@@ -18,3 +18,9 @@ class DocumentCountQuery extends QueryGen
 	 * Generate fx corp
 	###
 	_buildMain: -> "countDocuments(#{JSON.stringify @_query}, #{@_buildOptions})"
+
+class ExistsQuery extends DocumentCountQuery
+	constructor: (query)->
+		super query
+		@limit 1
+	_buildMain: -> "countDocuments(#{JSON.stringify @_query}, #{@_buildOptions}).then(function(doc){return doc.count !== 0})"

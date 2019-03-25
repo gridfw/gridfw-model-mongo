@@ -151,7 +151,7 @@ module.exports= class MongoRepository
 
 	### get document count ###
 	count:		(query)-> new DocumentCountQuery(query)
-	exists
+	exists:		(query)-> new ExistsQuery(query)
 
 	deleteMany:	(query)-> new DeleteManyQuery query
 	deleteOne:	(query)-> new DeleteOneQuery query
@@ -168,8 +168,8 @@ module.exports= class MongoRepository
 
 	replaceOne:	(docs)-> new ReplaceOneQuery query, doc
 
-	updateMany: (docs)-> new UpdateManyQuery query, update
-	updateOne
+	updateMany:	(docs)-> new UpdateManyQuery query, update
+	updateOne:	(docs)-> new UpdateOneQuery query, update
 	# 
 	# 
 	# 
