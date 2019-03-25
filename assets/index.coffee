@@ -143,8 +143,37 @@ module.exports= class MongoRepository
 			if typeof err is 'string'
 				err= new Error "MongoRepo:: #{err}" 
 			throw err
-	
+	# parse ObjectId
+	parseObjectId: (value)-> ObjectId.createFromHexString value
 	# Interfaces
+	aggregate:	(pipeline)-> new AggregateQuery(pipeline)
+	bulkwrite:	(arr)-> new BulkWriteQuery(arr)
+
+	### get document count ###
+	count:		(query)-> new DocumentCountQuery(query)
+	exists
+
+	deleteMany:	(query)-> new DeleteManyQuery query
+	deleteOne:	(query)-> new DeleteOneQuery query
+	
+	distinct:	(query)-> new DistinctQuery query
+	findMany:	(query)-> new FindManyQuery query
+	findOne:	(query)-> new FindOneQuery query
+	findOneAndDelete:	(query)-> new FindOneAndDeleteQuery query
+	findOneAndReplace:	(query)-> new FindOneAndReplaceQuery query, replacement
+	findOneAndUpdate:	(query)-> new FindOneAndUpdateQuery query, update
+
+	insertOne:	(doc)-> new InsertOneQuery doc
+	insertMany:	(docs)-> new InsertManyQuery docs
+
+	replaceOne:	(docs)-> new ReplaceOneQuery query, doc
+
+	updateMany: (docs)-> new UpdateManyQuery query, update
+	updateOne
+	# 
+	# 
+	# 
+	# 
 	find: (query)-> new FindQueryGen query
 	insert: (doc)-> (new InsertQueryGen()).insert doc
 	insertAll: (docs)-> (new InsertQueryGen()).insertAll docs
