@@ -69,6 +69,6 @@ _defineParams= ()->
 
 # param
 Object.setPrototypeOf _defineParams, new Proxy({}, {
-	get: (obj, key)-> "@{#{key}}"
+	get: (obj, key)-> toJSON: -> "@{#{key}}"
 	set: -> throw new Error 'Could not set this value'
 	});

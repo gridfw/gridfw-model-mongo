@@ -39,8 +39,8 @@ class CollectionRepository
 			for k,v of methods
 				throw "#{k} already set" if k of this
 				unless typeof v is 'function'
-					if typeof v.build is 'function'
-						v= v.build()
+					if typeof v._build is 'function'
+						v= v._build()
 					else
 						throw "Illegal expression for #{k}"
 				_defineProperty this, k, value: v
@@ -48,16 +48,16 @@ class CollectionRepository
 			return this
 		catch err
 			if typeof err is 'string'
-				throw new Error "#{@name}-Define methods>> #{err}"
+				throw new Error "#{@name} - Define methods>> #{err}"
 			else throw err
 	###*
 	 * Get document by id
 	###
-	get: (docId, fields)->
-		doc= await @c.findOne {_id: docId}, {projection: fields}
-		if doc
-			await @_m doc # Model.fetch
-		doc
+	# get: (docId, fields)->
+	# 	doc= await @c.findOne {_id: docId}, {projection: fields}
+	# 	if doc
+	# 		await @_m doc # Model.fetch
+	# 	doc
 	###*
 	 * Save document
 	 * @param {Document } doc - document to save
