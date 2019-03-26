@@ -13,20 +13,12 @@ _assign= Object.assign
 ###
 INDEX_PREFIX= 'gfw-'
 
-# ###*
-#  * Model plugin
-# ###
-#=require _gen-basic.coffee
-#=require _gen-*.coffee
+#=include _params.coffee
 
 ###*
  * MongoDB plugin for Gridfw-model
 ###
-
-#c=include _queryGenerator-create-fxes.coffee
-#c=include _queryGenerator.coffee
-#c=include _collection.coffee
-#c=include _cursor-iterator.coffee
+#=include _collection.coffee
 
 _allProxyToString= -> "Repositories[#{Reflect.ownKeys(this).join ', '}]"
 ALL_PROXY_DESCRIPTOR=
@@ -41,9 +33,6 @@ ALL_PROXY_DESCRIPTOR=
 	set: (obj, attr, value) -> throw new Error "Please don't set values manually to this object!"
 
 
-<%
-	#=include _gen-query.js
-%>
 
 # MONGO REPOSITORY
 module.exports= class MongoRepository
@@ -150,27 +139,8 @@ module.exports= class MongoRepository
 			throw err
 	# parse ObjectId
 	parseObjectId: (value)->ObjectId.createFromHexString value
-	# Interfaces
-	aggregate: <%= _genQuery('AggregateQuery', {pipeline:'array'}) %>
-	bulkwrite: <%= _genQuery('BulkWriteQuery', {arr: 'array'}) %>
-	### get document count ###
-	count: <%= _genQuery('DocumentCountQuery', {query: 'plainObject'}) %>
-	exists: <%= _genQuery('ExistsQuery', {query: 'plainObject'}) %>
 
-	deleteMany: <%= _genQuery('DeleteManyQuery', {query: 'plainObject'}) %>
-	deleteOne: <%= _genQuery('DeleteOneQuery', {query: 'plainObject'}) %>
-	
-	distinct: <%= _genQuery('DistinctQuery', {key:'string', query: 'plainObject'}) %>
-	findMany: <%= _genQuery('FindManyQuery', {query: 'plainObject'}) %>
-	findOne: <%= _genQuery('FindOneQuery', {query: 'plainObject'}) %>
-	findOneAndDelete: <%= _genQuery('FindOneAndDeleteQuery', {query: 'plainObject'}) %>
-	findOneAndReplace: <%= _genQuery('FindOneAndReplaceQuery', {query: 'plainObject', replacement: 'plainObject'}) %>
-	findOneAndUpdate: <%= _genQuery('FindOneAndUpdateQuery', {query: 'plainObject', update:'plainObject'}) %>
-
-	insertOne: <%= _genQuery('InsertOneQuery', {doc: 'plainObject'}) %>
-	insertMany: <%= _genQuery('InsertManyQuery', {query: 'array'}) %>
-
-	replaceOne: <%= _genQuery('ReplaceOneQuery', {query: 'plainObject', doc:'plainObject'}) %>
-
-	updateMany: <%= _genQuery('UpdateManyQuery', {query: 'plainObject', update:'plainObject'}) %>
-	updateOne: <%= _genQuery('UpdateOneQuery', {query: 'plainObject', update:'plainObject'}) %>
+	###*
+	 * define params
+	###
+	params: _defineParams

@@ -2,8 +2,8 @@
  * UpdateManyQuery
 ###
 class UpdateManyQuery extends QueryGen
-	constructor: (query, update)->
-		super()
+	constructor: (parent, query, update)->
+		super parent
 		@_query= query
 		@_update= update
 		return
@@ -26,8 +26,8 @@ _defineProperties UpdateManyQuery.prototype,
  * UpdateOneQuery
 ###
 class UpdateOneQuery extends QueryGen
-	constructor: (query, update)->
-		super()
+	constructor: (parent, query, update)->
+		super parent
 		@_query= query
 		@_update= update
 		return

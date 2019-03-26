@@ -2,8 +2,8 @@
  * FindManyQuery
 ###
 class FindManyQuery extends QueryGen
-	constructor: (query)->
-		super()
+	constructor: (parent, query)->
+		super parent
 		@_query= query
 		return
 
@@ -19,7 +19,14 @@ class FindManyQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "find(#{_stringifyQuery @_query}, #{@_buildOptions()})"
+	_buildMain: ->
+		r=["find(#{_stringifyQuery @_query}, #{@_buildOptions()})"]
+		if @_toArray
+			r.push ".toArray()"
+			# native
+			unless @_native
+				r.push ".then(this._mAll)"
+		r.join ''
 
 ###
 # GETTERS
@@ -27,27 +34,34 @@ class FindManyQuery extends QueryGen
 _defineProperties FindManyQuery.prototype,
 	tailable: get: -> @option 'tailable', yes
 	partial: get: -> @option 'partial', yes
+	toArray: get: ->
+		@_toArray= on
+		return this # chain
 
 ###*
  * FindOneQuery
 ###
 class FindOneQuery extends FindManyQuery
-	constructor: (query)->
-		super()
-		@_query= query
+	constructor: (parent, query)->
+		super parent, query
 		return
 
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "findOne(#{_stringifyQuery @_query}, #{@_buildOptions()})"
+	_buildMain: ->
+		r=["findOne(#{_stringifyQuery @_query}, #{@_buildOptions()})"]
+		# native
+		unless @_native
+			r.push ".then(this._m)"
+		r.join ''
 
 ###*
  * findOneAndDeleteQuery
 ###
 class FindOneAndDeleteQuery extends QueryGen
-	constructor: (query)->
-		super()
+	constructor: (parent, query)->
+		super parent
 		@_query= query
 		return
 	### WRAPPERS ###
@@ -58,15 +72,20 @@ class FindOneAndDeleteQuery extends QueryGen
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "findOneAndDelete(#{_stringifyQuery @_query}, #{@_buildOptions()})"
+	_buildMain: ->
+		r=["findOneAndDelete(#{_stringifyQuery @_query}, #{@_buildOptions()})"]
+		# native
+		unless @_native
+			r.push ".then(r=>{ if(r&&r.value) this._m(r.value); return r;})"
+		r.join ''
 
 
 ###*
  * findOneAndReplace
 ###
 class FindOneAndReplaceQuery extends FindOneAndDeleteQuery
-	constructor: (query, replacement)->
-		super()
+	constructor: (parent, query, replacement)->
+		super parent
 		@_query= query
 		@_rep= replacement
 		return
@@ -75,7 +94,12 @@ class FindOneAndReplaceQuery extends FindOneAndDeleteQuery
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "findOneAndReplace(#{_stringifyQuery @_query}, #{_stringifyQuery @_rep}, #{@_buildOptions()})"
+	_buildMain: ->
+		r=["findOneAndReplace(#{_stringifyQuery @_query}, #{_stringifyQuery @_rep}, #{@_buildOptions()})"]
+		# native
+		unless @_native
+			r.push ".then(r=>{ if(r&&r.value) this._m(r.value); return r;})"
+		r.join ''
 _defineProperties FindOneAndReplaceQuery.prototype,
 	upsert: get: -> @option 'upsert', yes
 	'new': get: -> @option 'returnOriginal', no
@@ -86,9 +110,8 @@ _defineProperties FindOneAndReplaceQuery.prototype,
  * findOneAndUpdate
 ###
 class FindOneAndUpdateQuery extends FindOneAndReplaceQuery
-	constructor: (query, update)->
-		super()
-		@_query= query
+	constructor: (parent, query, update)->
+		super parent, query
 		@_update= update
 		return
 	# accepted options
@@ -96,5 +119,10 @@ class FindOneAndUpdateQuery extends FindOneAndReplaceQuery
 	###*
 	 * Generate fx corp
 	###
-	_buildMain: -> "findOneAndUpdate(#{_stringifyQuery @_query}, #{_stringifyQuery @_update}, #{@_buildOptions()})"
+	_buildMain: ->
+		r=["findOneAndUpdate(#{_stringifyQuery @_query}, #{_stringifyQuery @_update}, #{@_buildOptions()})"]
+		# native
+		unless @_native
+			r.push ".then(r=>{ if(r&&r.value) this._m(r.value); return r;})"
+		r.join ''
 

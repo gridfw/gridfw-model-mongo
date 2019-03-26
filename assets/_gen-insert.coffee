@@ -2,8 +2,8 @@
  * InsertOneQuery
 ###
 class InsertOneQuery extends QueryGen
-	constructor: (doc)->
-		super()
+	constructor: (parent, doc)->
+		super parent
 		@_doc= doc
 		return
 	# accepted options
@@ -20,8 +20,8 @@ class InsertOneQuery extends QueryGen
  * InsertManyQuery
 ###
 class InsertManyQuery extends InsertOneQuery
-	constructor: (docs)->
-		super()
+	constructor: (parent, docs)->
+		super parent
 		@_docs= docs
 		return
 	###*

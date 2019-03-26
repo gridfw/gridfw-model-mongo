@@ -2,8 +2,8 @@
  * ReplaceOneQuery
 ###
 class ReplaceOneQuery extends QueryGen
-	constructor: (query, doc)->
-		super()
+	constructor: (parent, query, doc)->
+		super parent
 		@_query= query
 		@_doc= doc
 		return

@@ -2,8 +2,8 @@
  * DistinctQuery
 ###
 class DistinctQuery extends QueryGen
-	constructor: (key, query)->
-		super()
+	constructor: (parent, key, query)->
+		super parent
 		@_key= key
 		@_query= query
 		return

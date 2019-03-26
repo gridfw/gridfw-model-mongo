@@ -26,7 +26,7 @@ function _genQuery(generator, args){
 	// create query
 	genArgs= genArgs.join(', ');
 	fx[0]= `(${genArgs})->`;
-	fx.push(`\n\t\tnew ${generator} ${genArgs}`);
+	fx.push(`\n\t\tnew ${generator} this, ${genArgs}`);
 	// return fx
 	return fx.join('');
 }

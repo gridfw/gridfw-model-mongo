@@ -2,8 +2,8 @@
  * Aggregate query generation
 ###
 class BulkWriteQuery extends QueryGen
-	constructor: (writes)->
-		super()
+	constructor: (parent, writes)->
+		super parent
 		@_writes= writes
 		return
 

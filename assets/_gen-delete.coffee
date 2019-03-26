@@ -2,8 +2,8 @@
  * DeleteOneQuery
 ###
 class DeleteOneQuery extends QueryGen
-	constructor: (query)->
-		super()
+	constructor: (parent, query)->
+		super parent
 		@_query= query
 		return
 
@@ -22,7 +22,9 @@ class DeleteOneQuery extends QueryGen
  * Delete many
 ###
 class DeleteManyQuery extends DeleteOneQuery
-	constructor: (query)-> super(query)
+	constructor: (parent, query)->
+		super(parent, query)
+		return
 
 	###*
 	 * Generate fx corp

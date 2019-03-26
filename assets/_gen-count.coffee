@@ -2,8 +2,8 @@
  * Document count
 ###
 class DocumentCountQuery extends QueryGen
-	constructor: (query)->
-		super()
+	constructor: (parent, query)->
+		super parent
 		@_query= query
 		return
 
@@ -20,7 +20,8 @@ class DocumentCountQuery extends QueryGen
 	_buildMain: -> "countDocuments(#{_stringifyQuery @_query}, #{@_buildOptions()})"
 
 class ExistsQuery extends DocumentCountQuery
-	constructor: (query)->
-		super query
+	constructor: (parent, query)->
+		super parent, query
 		@limit 1
-	_buildMain: -> "countDocuments(#{_stringifyQuery @_query}, #{@_buildOptions()}).then(function(doc){return doc.count !== 0})"
+		return
+	_buildMain: -> "countDocuments(#{_stringifyQuery @_query}, #{@_buildOptions()}).then(function(nbr){return nbr !== 0})"
