@@ -37,6 +37,6 @@
   },
   "dependencies": {
     "gridfw-model": "^2.0.3",
-    "mongodb": "^3.1.13"
+    "mongodb": "^3.2.2"
   }
 }

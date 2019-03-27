@@ -58,23 +58,29 @@ module.exports= class MongoRepository
 	###
 	connect: (url, options)->
 		throw new Error 'Already connected' if @_db
-		db= await MongoClient.connect url,
+		_db= await MongoClient.connect url,
 			useNewUrlParser: yes
+		db= _db.db _db.s.options.dbName
 		_defineProperties this,
 			_db:
-				value: db
+				value: _db
 				configurable: on
 			db:
-				value: db.db db.s.options.dbName
+				value: db
 				configurable: on
-		# list of all collections
+		# list of collections
+		dbCollections= (await db.collections()).map (c)-> c.collectionName
 		collections= []
 		for k in Object.keys @all
 			collections.push @all[k]
-		# create all collections of not already
-		await collections.map (c)=> @db.createCollection(c.name)
+			# create new collection
+			await db.createCollection(k) unless k in dbCollections
+
 		# reload indexes
-		await collections.map (c)=> c.reloadIndexes()
+		# do reload indexes collection by collection because of mongo latency
+		# with Promise.all
+		for c in collections
+			await c.reloadIndexes()
 		return db
 	###*
 	 * Close database connection

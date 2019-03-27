@@ -70,7 +70,7 @@ class CollectionRepository
 			else
 				@c.insertOne doc
 		catch err
-			throw new Error "Expected #{@Model.name} model document" unless doc instanceof @Model
+			err= new Error "Expected #{@Model.name} model document" unless doc instanceof @Model
 			throw err
 	saveAll: (docs)->
 		try
