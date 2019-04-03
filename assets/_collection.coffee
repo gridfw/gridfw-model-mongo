@@ -24,7 +24,7 @@ class CollectionRepository
 			_mAll: value: (arr)->
 				return arr unless arr? # null or undefined
 				if Array.isArray arr
-					return arr.map modelFetcher
+					return Promise.all arr.map modelFetcher
 				else
 					return modelFetcher arr
 			# iterrator wrapper
