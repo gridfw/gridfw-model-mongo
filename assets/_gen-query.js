@@ -10,7 +10,7 @@ function _genQuery(generator, args){
 	for(var k in args){
 		var v= args[k];
 		genArgs.push(k);
-		fx.push(`\n\t\tthrow new Error '${k} expected ${v}' unless `);
+		fx.push(`\n\t\tthrow new Error '${k} expected ${v}' unless (typeof ${k} is 'object' and ${k}.hasOwnProperty 'toJSON') or `);
 		switch(v){
 			case 'plainObject':
 				fx.push(`typeof ${k} is 'object' and not Array.isArray ${k}`);
