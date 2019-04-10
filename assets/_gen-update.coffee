@@ -42,3 +42,6 @@ class UpdateOneQuery extends QueryGen
 	 * Generate fx corp
 	###
 	_buildMain: -> "updateOne(#{_stringifyQuery @_query}, #{_stringifyQuery @_update}, #{@_buildOptions()})"
+
+_defineProperties UpdateOneQuery.prototype,
+	upsert: get: -> @option 'upsert', yes
