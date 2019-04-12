@@ -133,7 +133,6 @@ class CollectionRepository
 		# get existing indexes
 		colIndexes= await @c.indexes()
 		colIndexNames= []
-		jobs=[]
 		if colIndexes and colIndexes.length
 			for idx in colIndexes
 				idxName= idx.name
@@ -142,13 +141,18 @@ class CollectionRepository
 						colIndexNames.push idxName
 					else
 						# drop if not anymore
-						jobs.push collection.dropIndex idxName
+						console.log "DB::#{@name}>> -- DROP index: #{idxName} "
+						await collection.dropIndex idxName
 		# insert new indexes
 		newIndexes= indexes.filter (idx)-> idx.name not in colIndexNames
 		if newIndexes.length
-			jobs.push collection.createIndexes newIndexes
+			# log
+			lgIdx= newIndexes.map((el)-> JSON.stringify el).join ",\n"
+			console.log "DB::#{@name}>> -- CREATE index: [#{lgIdx}]"
+			# create
+			await collection.createIndexes newIndexes
 		# return
-		Promise.all jobs
+		return
 	###*
 	 * Rename collection
 	 * @return promise

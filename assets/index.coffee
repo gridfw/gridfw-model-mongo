@@ -74,7 +74,9 @@ module.exports= class MongoRepository
 		for k in Object.keys @all
 			collections.push @all[k]
 			# create new collection
-			await db.createCollection(k) unless k in dbCollections
+			unless k in dbCollections
+				console.log 'DB>> -- Create collection: ', k
+				await db.createCollection(k) 
 
 		# reload indexes
 		# do reload indexes collection by collection because of mongo latency
