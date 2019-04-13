@@ -72,33 +72,37 @@ class CollectionRepository
 		catch err
 			err= new Error "Expected #{@Model.name} model document" unless doc instanceof @Model
 			throw err
-	saveAll: (docs)->
-		try
-			# filter docs with and without ids
-			docsWithIds= []
-			docsWithoutIds= []
-			for doc in docs
-				if doc._id
-					docsWithIds.push doc
-				else
-					docsWithoutIds.push doc
-			# collection
-			collection= @c
-			# replace docs with ids
-			if docsWithIds.length
-				jobs= docsWithIds.map (doc)-> collection.replaceOne {_id: doc._id}, doc, upsert: yes
-			else
-				jobs= []
-			# insert docs without ids
-			if docsWithoutIds.length
-				jobs.push collection.insertMany docsWithoutIds
-			# return promise
-			return Promise.all jobs
-		catch err
-			throw new Error 'Expected document array' unless Array.isArray docs
-			for doc, i in docs
-				throw new Error "Doc at index #{i} isn't of type #{@Model.name}" unless doc instanceof @Model
-			throw err
+	insertOne: (doc)-> @c.insertOne doc
+	insertMany: (docs)-> @c.insertMany docs
+			
+		
+	# saveAll: (docs)->
+	# 	try
+	# 		# filter docs with and without ids
+	# 		docsWithIds= []
+	# 		docsWithoutIds= []
+	# 		for doc in docs
+	# 			if doc._id
+	# 				docsWithIds.push doc
+	# 			else
+	# 				docsWithoutIds.push doc
+	# 		# collection
+	# 		collection= @c
+	# 		# replace docs with ids
+	# 		if docsWithIds.length
+	# 			jobs= docsWithIds.map (doc)-> collection.replaceOne {_id: doc._id}, doc, upsert: yes
+	# 		else
+	# 			jobs= []
+	# 		# insert docs without ids
+	# 		if docsWithoutIds.length
+	# 			jobs.push collection.insertMany docsWithoutIds
+	# 		# return promise
+	# 		return Promise.all jobs
+	# 	catch err
+	# 		throw new Error 'Expected document array' unless Array.isArray docs
+	# 		for doc, i in docs
+	# 			throw new Error "Doc at index #{i} isn't of type #{@Model.name}" unless doc instanceof @Model
+	# 		throw err
 	###*
 	 * Drop collection
 	 * @return promise
