@@ -28,7 +28,7 @@ class QueryGen
 	### wrappers ###
 	timeout: (timeout)-> @option 'maxTimeMS', timeout
 	comment: (comment)-> @option 'comment', comment
-	hint: (hint)-> @option 'hint', hint
+	hint: (hint)-> @option 'hint', INDEX_PREFIX + hint
 
 	### build function ###
 	_buildM: -> @_buildMain().replace /"@{.+?}"/g, (s)-> JSON.parse(s).slice 2, -1

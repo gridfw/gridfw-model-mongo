@@ -11,7 +11,7 @@ _assign= Object.assign
 ###*
  * Prefexing auto created indexes
 ###
-INDEX_PREFIX= 'gfw-'
+INDEX_PREFIX= 'g-'
 
 #=include _params.coffee
 
