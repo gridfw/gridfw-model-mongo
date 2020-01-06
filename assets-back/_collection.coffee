@@ -128,6 +128,7 @@ class CollectionRepository
 		for idx in @_i
 			throw new Error 'All indexes expected objects' unless typeof idx is 'object' and idx
 			throw new Error "All indexes expect a string name" unless typeof idx.name is 'string'
+			throw new Error "Index must be prefixed with: #{@_prefix}" unless idx.name.startsWith @_prefix
 			ob= _create null
 			_assign ob, idx
 			ob.name= INDEX_PREFIX + ob.name
