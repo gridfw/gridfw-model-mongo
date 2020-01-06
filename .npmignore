@@ -1,9 +1,14 @@
 # dev files
 assets/*
+assets-back/*
 assets-test/*
+test-assets/*
+test-build/*
 doc/*
 tmp/*
 gulp-file.tmp.*
+gulp-file.coffee
+gulpfile.js
 
 # Dependency directories
 node_modules/

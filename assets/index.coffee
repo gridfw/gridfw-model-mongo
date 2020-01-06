@@ -62,11 +62,15 @@ class DB
 				_defineProperties this,
 					_db: {value: null, configurable: on}
 					db: {value: null, configurable: on}
-				# disconnect all collections
-				for k,v of @all
-					do v._whenDisconnect
+				# Emit disconnect
+				do @_emitDisconnect
 				# return
 				return
+	_emitDisconnect: ->
+		# disconnect all collections
+		for k,v of @all
+			do v._whenDisconnect
+		return
 	###*
 	 * Do is connected
 	###
