@@ -1,15 +1,16 @@
 ###*
  * Collection
 ###
-COLLECTION_NAME_REGEX= /^[A-Z][a-z_]*$/
+COLLECTION_NAME_REGEX= /^[a-z][a-z_]*$/i
 class Collection
-	constructor: (db, name, indexes)->
+	constructor: (db, name, indexes, model)->
 		throw 'Collection name expected string' unless typeof name is 'string'
 		throw "Collection name must be: #{COLLECTION_NAME_REGEX.toString()}" unless COLLECTION_NAME_REGEX.test name
-		_defineProperties this,
-			db: value: db
-			name: value: name
-			indexes: value: indexes or []
+		@db= db
+		@name= name
+		@indexes= idnexes or []
+		@model= model
+		@_defineCbs= [] # define callbacks
 		return
 	###*
 	 * Set indexes
@@ -18,21 +19,23 @@ class Collection
 	###*
 	 * Define methods
 	###
-	define: (methods)->
-		try
-			throw 'Illegal arguments' unless arguments.length is 1 and typeof methods is 'object' and methods
-			for k,v of methods
-				throw "#{k} expected function" unless typeof v is 'function'
-				throw "#{k} already set" if k of this
-				_defineProperty this, k, value: v
-			return this # chain
-		catch err
-			err= new Error "#{@name} - Define methods>> #{err}" if typeof err is 'string'
-			throw err
+	define: (cb)->
+		throw new Error 'Illegal arguments' unless arguments.length is 1 and typeof cb is 'function'
+		@_defineCbs.push cb
+		do @_applyDefine if @collection # define callbacks if already connected
+		this # chain
+	_applyDefine: ->
+		collection= @collection
+		model= @model
+		for cb in @_defineCbs
+			result= cb collection, model
+			throw new Error "::define result expected object" unless typeof result is 'object' and result
+			_assign this, result
+		return
 	_reloadIndexes: ->
 		try
 			indexes= @indexes
-			collection= @c
+			collection= @collection
 			indexPrefix= @db.prefix
 			# Check
 			indexNames= []
@@ -68,35 +71,29 @@ class Collection
 			throw err
 	# When disconnect from Mongo
 	_whenDisconnect: ->
-		delete @c
-		delete @collection
+		@collection= null
+		# remove all created methods
+		for k of this
+			if @hasOwnProperty(k) and typeof @[k] is 'function'
+				@[k]= null
 		return
-
+	_onConnect: ->
+		# Get collection
+		@collection = @db.db.collection @name
+		# Define properties
+		@_applyDefine()
+		# reload index
+		await c._reloadIndexes()
+		return
 		
 	### COLLECTION MANIPULATION ###
 	save: (doc)->
 		if doc._id
-			@c.replaceOne {_id: doc._id}, doc, upsert: yes
+			@collection.replaceOne {_id: doc._id}, doc, upsert: yes
 		else
-			@c.insertOne doc
-	insertOne: (doc)-> @c.insertOne doc
-	insertMany: (docs)-> @c.insertMany docs
+			@collection.insertOne doc
+	insertOne: (doc)-> @collection.insertOne doc
+	insertMany: (docs)-> @collection.insertMany docs
 
-	drop: -> @c.drop()
-	indexes: -> @c.indexes()
-
-# GETTER
-_getCollectionOnce= ->
-	db= @db.db
-	throw new Error 'Not connected!' unless db
-	collection = db.collection @name
-	property=
-		value: collection
-		configurable: yes
-	_defineProperties this,
-		c: property
-		collection: property
-	collection
-_defineProperties Collection.prototype,
-	c: get: _getCollectionOnce
-	collection: get: _getCollectionOnce
+	drop: -> @collection.drop()
+	indexes: -> @collection.indexes()

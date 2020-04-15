@@ -12,3 +12,4 @@ gulpfile.js
 
 # Dependency directories
 node_modules/
+gulp-compiled.tmp.js

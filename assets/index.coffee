@@ -1,5 +1,6 @@
 'use strict'
 {MongoClient, ObjectID: ObjectId}= require 'mongodb'
+ModelClass= require 'gridfw-model'
 ###*
  * UTILS
 ###
@@ -23,11 +24,10 @@ class DB
 			throw 'Expected options.url as string' unless typeof options.url is 'string'
 			throw 'options.prefix expected as string' unless typeof options.prefix is 'string'
 			# 
-			_defineProperties this,
-				_url: value: options.url
-				_prefix: value: options.prefix
-				mongo: value: MongoClient # Direct access to mongoClient
-				all: value: _create null # store all collections
+			@mongo= MongoClient # Direct access to mongoClient
+			@all= {} # store all collections
+			@_prefix= options.prefix
+			@_url= options.url
 			@_db= null
 			return
 		catch err
@@ -42,15 +42,13 @@ class DB
 	connect: (url, options)->
 		throw new Error 'Already connected' if @_db
 		# Connect to Mongo
-		_db= await MongoClient.connect url, useNewUrlParser: yes
-		db= _db.db _db.s.options.dbName
-		_defineProperties this,
-			_db: {value: _db, configurable: on}
-			db: {value: db, configurable: on}
+		@_db= _db= await MongoClient.connect url, useNewUrlParser: yes
+		@db= _db.db _db.s.options.dbName
 		# Create new collections
 		do @_createNewCollections
-		# Relaod all indexes
-		do @_reloadIndexes
+		# prepare collection
+		for k, c of @all
+			await c._onConnect()
 		this # chain
 	###*
 	 * Close database connection
@@ -59,9 +57,7 @@ class DB
 		@_db.close(force)
 			.then =>
 				# clear DB instance
-				_defineProperties this,
-					_db: {value: null, configurable: on}
-					db: {value: null, configurable: on}
+				@_db= @db= null
 				# Emit disconnect
 				do @_emitDisconnect
 				# return
@@ -90,16 +86,9 @@ class DB
 			@_assertIndexes options.indexes if options.indexes
 			# create collection
 			name= options.name
-			collection= new Collection this, name, options.indexes
-			throw "Collection already set: #{name}" if @hasOwnProperty name
-			_defineProperty this, name,
-				value: collection
-				enumerable: yes
-				configurable: yes
-			_defineProperty @all, name,
-				value: collection
-				enumerable: yes
-				configurable: yes
+			collection= new Collection this, name, options.indexes, @options.model
+			throw "Collection already set: #{name}" if @all[name]?
+			@all[name]= collection
 			# define methods
 			collection.define options.define if options.define
 			# return collection
@@ -121,10 +110,10 @@ class DB
 			await db.createCollection(k) unless k in dbCollections
 		return
 	# Reload all indexes
-	_reloadIndexes: ->
-		for k, c of @all
-			await c._reloadIndexes()
-		return
+	# _reloadIndexes: ->
+	# 	for k, c of @all
+	# 		await c._reloadIndexes()
+	# 	return
 	# Check indexes
 	_assertIndexes: (indexes)->
 		throw 'Expected options.indexes to be list' unless Array.isArray indexes
@@ -132,6 +121,6 @@ class DB
 		for index, i in indexes
 			idxName= index.name
 			throw "Expected index name as string at position #{i}" unless typeof idxName is 'string'
-			throw "Index name expected to starts with: #{indexPrefix}" unless idxName.startsWith indexPrefix
+			throw "Index name expected to start with: #{indexPrefix}" unless idxName.startsWith indexPrefix
 		return
 module.exports= DB

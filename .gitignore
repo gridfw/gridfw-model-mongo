@@ -63,3 +63,4 @@ build/*
 test-build/*
 gulp-file.tmp.*
 package-lock.json
+gulp-compiled.tmp.js
