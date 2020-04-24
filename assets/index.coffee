@@ -124,3 +124,17 @@ class DB
 			throw "Index name expected to start with: #{indexPrefix}" unless idxName.startsWith indexPrefix
 		return
 module.exports= DB
+
+
+
+# Model ObjectId
+ModelClass.addType 'ObjectId',
+	ModelClass.Mixed()
+	.check (data)-> data?._bsontype is 'ObjectID'
+	.convert (data)->
+		throw 'Expected data' unless data
+		unless data._bsontype is 'ObjectID'
+			data= ObjectId.createFromHexString data
+		return data
+# Add to BSON
+ModelClass.TO_JSON.push 'toBSON'
