@@ -8,7 +8,7 @@ class Collection
 		throw "Collection name must be: #{COLLECTION_NAME_REGEX.toString()}" unless COLLECTION_NAME_REGEX.test name
 		@db= db
 		@name= name
-		@indexes= idnexes or []
+		@_indexes= indexes or []
 		@model= model
 		@_defineCbs= [] # define callbacks
 		return
@@ -34,9 +34,9 @@ class Collection
 		return
 	_reloadIndexes: ->
 		try
-			indexes= @indexes
+			indexes= @_indexes
 			collection= @collection
-			indexPrefix= @db.prefix
+			indexPrefix= @db._prefix
 			# Check
 			indexNames= []
 			throw 'Expected list of indexes' unless Array.isArray indexes
@@ -83,7 +83,7 @@ class Collection
 		# Define properties
 		@_applyDefine()
 		# reload index
-		await c._reloadIndexes()
+		await @_reloadIndexes()
 		return
 		
 	### COLLECTION MANIPULATION ###

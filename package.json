@@ -1,6 +1,6 @@
 {
   "name": "gridfw-model-mongo",
-  "version": "3.0.2",
+  "version": "3.0.4",
   "description": "mongo plugin for gridfw-model",
   "main": "build/index.js",
   "scripts": {

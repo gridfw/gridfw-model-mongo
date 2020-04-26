@@ -7,6 +7,9 @@ ModelClass= require 'gridfw-model'
 _defineProperty= Object.defineProperty
 _defineProperties= Object.defineProperties
 _create= Object.create
+_assign= Object.assign
+
+#=include collection.coffee
 
 ###*
  * Load data from MongoDB
@@ -21,13 +24,11 @@ class DB
 			# Check arguments
 			throw 'Illegal arguments' unless arguments.length is 1
 			throw 'Options expected' unless options
-			throw 'Expected options.url as string' unless typeof options.url is 'string'
 			throw 'options.prefix expected as string' unless typeof options.prefix is 'string'
 			# 
 			@mongo= MongoClient # Direct access to mongoClient
 			@all= {} # store all collections
 			@_prefix= options.prefix
-			@_url= options.url
 			@_db= null
 			return
 		catch err
@@ -42,7 +43,7 @@ class DB
 	connect: (url, options)->
 		throw new Error 'Already connected' if @_db
 		# Connect to Mongo
-		@_db= _db= await MongoClient.connect url, useNewUrlParser: yes
+		@_db= _db= await MongoClient.connect url, {useNewUrlParser: yes, useUnifiedTopology: yes}
 		@db= _db.db _db.s.options.dbName
 		# Create new collections
 		do @_createNewCollections
@@ -86,7 +87,7 @@ class DB
 			@_assertIndexes options.indexes if options.indexes
 			# create collection
 			name= options.name
-			collection= new Collection this, name, options.indexes, @options.model
+			collection= new Collection this, name, options.indexes, options.model
 			throw "Collection already set: #{name}" if @all[name]?
 			@all[name]= collection
 			# define methods
@@ -117,7 +118,7 @@ class DB
 	# Check indexes
 	_assertIndexes: (indexes)->
 		throw 'Expected options.indexes to be list' unless Array.isArray indexes
-		indexPrefix= @prefix
+		indexPrefix= @_prefix
 		for index, i in indexes
 			idxName= index.name
 			throw "Expected index name as string at position #{i}" unless typeof idxName is 'string'
