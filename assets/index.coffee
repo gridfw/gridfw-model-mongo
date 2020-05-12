@@ -46,7 +46,7 @@ class DB
 		@_db= _db= await MongoClient.connect url, {useNewUrlParser: yes, useUnifiedTopology: yes}
 		@db= _db.db _db.s.options.dbName
 		# Create new collections
-		do @_createNewCollections
+		await @_createNewCollections()
 		# prepare collection
 		for k, c of @all
 			await c._onConnect()
@@ -133,9 +133,11 @@ ModelClass.addType 'ObjectId',
 	ModelClass.Mixed()
 	.check (data)-> data?._bsontype is 'ObjectID'
 	.convert (data)->
-		throw 'Expected data' unless data
-		unless data._bsontype is 'ObjectID'
-			data= ObjectId.createFromHexString data
+		if data
+			unless data._bsontype is 'ObjectID'
+				data= ObjectId.createFromHexString data
+		else
+			data= null
 		return data
 # Add to BSON
 ModelClass.TO_JSON.push 'toBSON'
