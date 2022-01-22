@@ -63,9 +63,9 @@ do ->
 		user= UserModel {
 			firstName: 'khalid'
 			lastName: 'RAFIK'
-			phone: '0654181111'
+			phone: '065477116958'
 			email: 'khalid.rfk@gmail.com'
-			password: 'horizon123'
+			password: 'qwerty123'
 			age: 30
 		}
 
